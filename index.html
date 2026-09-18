@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0A0F1E">
+<title>TAT Wallet — ترکیبی از تعامل</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <!-- ============ SPLASH ============ -->
+  <div class="splash" id="splash">
+    <div class="splash-logo">
+      <div class="splash-coin" id="splashCoin"></div>
+      <div class="splash-name">TAT</div>
+      <div class="splash-tag">ترکیبی از تعامل</div>
+    </div>
+    <div class="splash-loader"><span></span></div>
+  </div>
+
+  <!-- ============ AUTH ============ -->
+  <div class="page auth-page" id="authPage">
+    <div class="auth-header">
+      <div class="auth-coin" id="authCoin"></div>
+      <div class="auth-title">خوش اومدی 👋</div>
+      <div class="auth-sub">برای شروع، شماره موبایلت رو وارد کن</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">شماره موبایل</label>
+      <input class="form-input" id="phoneInput" type="tel" placeholder="۰۹۱۲۳۴۵۶۷۸۹" maxlength="11">
+    </div>
+    <button class="btn btn-primary" onclick="login()">ورود به کیف پول</button>
+  </div>
+
+  <!-- ============ MAIN APP ============ -->
+  <div class="main-app" id="mainApp" style="display: none;">
+
+    <!-- ====== HOME ====== -->
+    <section class="page active" data-page="home">
+      <div class="header">
+        <div>
+          <div class="greet">سلام، خوش اومدی 👋</div>
+          <div class="username" id="userName">علی احمدی</div>
+        </div>
+        <div class="header-actions">
+          <button class="icon-btn" onclick="goTo('notifications')">
+            🔔<span class="badge">۲</span>
+          </button>
+          <button class="icon-btn primary" onclick="goTo('settings')" id="headerAvatar">👤</button>
+        </div>
+      </div>
+
+      <!-- کارت سه‌بعدی -->
+      <div class="card-scene">
+        <div class="card-flip" id="cardFlip" onclick="flipCard()">
+          <!-- روی کارت -->
+          <div class="card-face card-front" id="cardFront">
+            <div class="card-top-row">
+              <div class="brand-logo">
+                <div class="brand-logo-icon">T</div>
+                <span>TAT</span>
+              </div>
+              <div class="chip"></div>
+            </div>
+            <div class="card-number" id="cardNumber">۹۹۰۰ ۶۰۳۷ ۱۲۳۴ ۵۶۷۸</div>
+            <div class="card-bottom-row">
+              <div class="card-coin-mini" id="cardCoinFront"></div>
+              <div class="network-logo">TAT</div>
+            </div>
+          </div>
+          <!-- پشت کارت -->
+          <div class="card-face card-back">
+            <div class="magnetic-strip"></div>
+            <div class="card-back-content">
+              <div class="card-back-row">
+                <div>
+                  <div class="card-label">صاحب کارت</div>
+                  <div class="card-value en" id="cardHolderBack">ALI AHMADI</div>
+                </div>
+                <div>
+                  <div class="card-label">انقضا</div>
+                  <div class="card-value en">۱۲/۳۰</div>
+                </div>
+              </div>
+              <div class="cvv-row">
+                <span style="font-size:11px; color:var(--text-dim);">CVV2</span>
+                <div class="cvv-box">۱۲۳</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flip-hint">🔄 برای دیدن پشت کارت، لمس کن</div>
+
+      <!-- موجودی -->
+      <div class="balance-section">
+        <div class="balance-label">
+          موجودی کل
+          <button class="eye-btn" id="eyeBtn" onclick="togglePrivacy()">👁</button>
+        </div>
+        <div class="balance-main" id="balanceMain">
+          <span class="balance-coin" id="balanceCoin"></span>
+          <span id="balanceValue">۱٬۲۵۰٫۰۰</span>
+        </div>
+        <div class="balance-fiat" id="balanceFiatBox">≈ <strong id="balanceFiat">۱۲۵٬۰۰۰ تومان</strong></div>
+      </div>
+
+      <!-- دکمه‌های عملیات -->
+      <div class="actions">
+        <button class="action-btn" onclick="openModal('send')">
+          <span class="ico">📤</span> ارسال
+        </button>
+        <button class="action-btn" onclick="openModal('receive')">
+          <span class="ico">📥</span> دریافت
+        </button>
+        <button class="action-btn" onclick="goTo('staking')">
+          <span class="ico">💰</span> سپرده
+        </button>
+      </div>
+
+      <!-- دارایی‌های خلاصه -->
+      <div class="section-head">
+        <div class="section-title">💼 دارایی‌های من</div>
+        <div class="section-link" onclick="goTo('portfolio')">مشاهده همه</div>
+      </div>
+      <div class="portfolio-quick">
+        <div class="pq-grid">
+          <div class="pq-item" onclick="goTo('portfolio')">
+            <div class="pq-coin" id="pqCoinTAT"></div>
+            <div class="pq-name">TAT</div>
+            <div class="pq-val">۱٬۲۵۰</div>
+          </div>
+          <div class="pq-item" onclick="goTo('portfolio')">
+            <div class="pq-icon">💵</div>
+            <div class="pq-name">تتر</div>
+            <div class="pq-val">۵</div>
+          </div>
+          <div class="pq-item" onclick="goTo('portfolio')">
+            <div class="pq-icon">🥇</div>
+            <div class="pq-name">طلا</div>
+            <div class="pq-val">۰٫۱</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- نمودار TAT -->
+      <div class="section-head">
+        <div class="section-title">📊 ارزش TAT</div>
+        <div class="chart-change">↑ ۰٫۹۷٪</div>
+      </div>
+      <div class="chart-card" onclick="showAssetDetail('TAT')">
+        <div class="chart-head">
+          <div class="chart-price">۱۰۰ تومان<small>هر سکه TAT</small></div>
+          <div class="chart-arrow">›</div>
+        </div>
+        <svg class="chart-svg" viewBox="0 0 300 70" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#00B894" stop-opacity="0.5"/>
+              <stop offset="100%" stop-color="#00B894" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path d="M0,50 L30,45 L60,48 L90,35 L120,40 L150,25 L180,30 L210,20 L240,28 L270,15 L300,22 L300,70 L0,70 Z" fill="url(#cg)"/>
+          <path d="M0,50 L30,45 L60,48 L90,35 L120,40 L150,25 L180,30 L210,20 L240,28 L270,15 L300,22" fill="none" stroke="#00B894" stroke-width="2" stroke-linejoin="round"/>
+        </svg>
+        <div class="chart-tabs">
+          <button class="chart-tab active">۲۴ ساعت</button>
+          <button class="chart-tab">۷ روز</button>
+          <button class="chart-tab">۳۰ روز</button>
+        </div>
+      </div>
+
+      <!-- تراکنش‌ها -->
+      <div class="section-head">
+        <div class="section-title">تراکنش‌های اخیر</div>
+        <div class="section-link" onclick="goTo('history')">مشاهده همه</div>
+      </div>
+      <div class="tx-list" id="recentTxs"></div>
+    </section>
+
+    <!-- ====== MARKET ====== -->
+    <section class="page" data-page="market">
+      <div class="header">
+        <div>
+          <div class="greet">معاملات</div>
+          <div class="username">بازار TAT</div>
+        </div>
+      </div>
+
+      <div class="search-box">
+        <span>🔍</span>
+        <input type="text" placeholder="جستجو در ارزها..." id="marketSearch">
+      </div>
+
+      <div class="filter-bar">
+        <button class="filter-chip active" data-filter="all">همه</button>
+        <button class="filter-chip" data-filter="crypto">ارز دیجیتال</button>
+        <button class="filter-chip" data-filter="gold">طلا</button>
+      </div>
+
+      <div class="market-list" id="marketList"></div>
+    </section>
+
+    <!-- ====== PORTFOLIO ====== -->
+    <section class="page" data-page="portfolio">
+      <div class="header">
+        <div>
+          <div class="greet">دارایی‌ها</div>
+          <div class="username">پرتفوی من</div>
+        </div>
+      </div>
+
+      <div class="portfolio-total">
+        <div class="portfolio-label">مجموع دارایی</div>
+        <div class="portfolio-value">۱٬۲۵۰٬۰۰۰</div>
+        <div class="portfolio-label" style="margin-top:4px;">تومان</div>
+        <div class="portfolio-change">↑ +۲۵٬۰۰۰ (۲٪)</div>
+      </div>
+
+      <div class="portfolio-donut">
+        <div class="donut-chart"></div>
+        <div class="portfolio-legend">
+          <div class="legend-item">
+            <span><span class="legend-dot" style="background:#00B894"></span> TAT</span>
+            <span>۱۰٪</span>
+          </div>
+          <div class="legend-item">
+            <span><span class="legend-dot" style="background:#FDCB6E"></span> تتر</span>
+            <span>۷۳٪</span>
+          </div>
+          <div class="legend-item">
+            <span><span class="legend-dot" style="background:#6C5CE7"></span> طلا</span>
+            <span>۱۷٪</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-head">
+        <div class="section-title">دارایی‌های من</div>
+      </div>
+
+      <div class="asset-list" id="assetList"></div>
+    </section>
+
+    <!-- ====== STAKING ====== -->
+    <section class="page" data-page="staking">
+      <div class="header">
+        <div>
+          <div class="greet">سرمایه‌گذاری</div>
+          <div class="username">سپرده‌گذاری TAT</div>
+        </div>
+      </div>
+
+      <div class="staking-hero">
+        <div class="staking-rate">۳۶٪</div>
+        <div class="staking-rate-label">سود سالانه</div>
+        <div class="staking-earned">
+          سود انباشته شما: <strong>+۲۵ TAT</strong>
+        </div>
+      </div>
+
+      <div class="section-head">
+        <div class="section-title">انتخاب نوع سپرده</div>
+      </div>
+
+      <div class="stake-options">
+        <div class="stake-option flexible" onclick="openStakeModal('flexible', 20)">
+          <div class="stake-icon" style="background:rgba(0,217,126,0.15)">🟢</div>
+          <div class="stake-body">
+            <div class="stake-name">انعطاف‌پذیر</div>
+            <div class="stake-meta">هر وقت بخوای برداشت کن</div>
+          </div>
+          <div class="stake-rate">
+            <div class="stake-rate-val">۲۰٪</div>
+            <div class="stake-rate-label">سالانه</div>
+          </div>
+        </div>
+
+        <div class="stake-option medium" onclick="openStakeModal('1m', 28)">
+          <div class="stake-icon" style="background:rgba(253,203,110,0.15)">🟡</div>
+          <div class="stake-body">
+            <div class="stake-name">۱ ماهه</div>
+            <div class="stake-meta">قفل: ۳۰ روز</div>
+          </div>
+          <div class="stake-rate">
+            <div class="stake-rate-val">۲۸٪</div>
+            <div class="stake-rate-label">سالانه</div>
+          </div>
+        </div>
+
+        <div class="stake-option long" onclick="openStakeModal('3m', 32)">
+          <div class="stake-icon" style="background:rgba(255,159,67,0.15)">🟠</div>
+          <div class="stake-body">
+            <div class="stake-name">۳ ماهه</div>
+            <div class="stake-meta">قفل: ۹۰ روز</div>
+          </div>
+          <div class="stake-rate">
+            <div class="stake-rate-val">۳۲٪</div>
+            <div class="stake-rate-label">سالانه</div>
+          </div>
+        </div>
+
+        <div class="stake-option vlong" onclick="openStakeModal('6m', 36)">
+          <div class="stake-icon" style="background:rgba(255,71,87,0.15)">🔴</div>
+          <div class="stake-body">
+            <div class="stake-name">۶ ماهه</div>
+            <div class="stake-meta">قفل: ۱۸۰ روز</div>
+          </div>
+          <div class="stake-rate">
+            <div class="stake-rate-val">۳۶٪</div>
+            <div class="stake-rate-label">سالانه</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== APPS ====== -->
+    <section class="page" data-page="apps">
+      <div class="header">
+        <div>
+          <div class="greet">اکوسیستم</div>
+          <div class="username">اپ‌های متصل</div>
+        </div>
+      </div>
+
+      <div class="portfolio-quick" style="margin-top: 8px;">
+        <div class="pq-grid">
+          <div class="pq-item">
+            <div class="pq-val" style="font-size:22px; color: var(--primary);">۳</div>
+            <div class="pq-name">اپ متصل</div>
+          </div>
+          <div class="pq-item">
+            <div class="pq-val" style="font-size:22px; color: var(--gold);">۸۵۰</div>
+            <div class="pq-name">مجموع TAT</div>
+          </div>
+          <div class="pq-item">
+            <div class="pq-val" style="font-size:22px; color: var(--accent);">۱۲</div>
+            <div class="pq-name">تراکنش امروز</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="apps-list" id="appsList"></div>
+    </section>
+
+    <!-- ====== SETTINGS ====== -->
+    <section class="page" data-page="settings">
+      <div class="header">
+        <div>
+          <div class="greet">حساب کاربری</div>
+          <div class="username">تنظیمات</div>
+        </div>
+      </div>
+
+      <div class="profile-card">
+        <div class="profile-avatar" id="profileAvatar">👤</div>
+        <div class="profile-info">
+          <div class="profile-name" id="profileName">علی احمدی</div>
+          <div class="profile-id" id="profileId">@ali_7x3k</div>
+        </div>
+        <button class="profile-edit" onclick="showToast('ویرایش پروفایل')">✏️</button>
+      </div>
+
+      <div class="section-head"><div class="section-title">🔐 امنیت</div></div>
+      <div class="settings-list">
+        <button class="settings-item" onclick="showToast('تغییر رمز 🔐')">
+          <span class="settings-icon">🔐</span>
+          <span class="settings-label">تغییر رمز عبور</span>
+          <span class="settings-arrow">‹</span>
+        </button>
+        <div class="settings-item toggle-item">
+          <span class="settings-icon">👆</span>
+          <span class="settings-label">ورود با اثر انگشت</span>
+          <button class="toggle-switch active" onclick="toggleSwitch(this)"></button>
+        </div>
+        <div class="settings-item toggle-item">
+          <span class="settings-icon">🔑</span>
+          <span class="settings-label">تایید دو مرحله‌ای (2FA)</span>
+          <button class="toggle-switch" onclick="toggleSwitch(this)"></button>
+        </div>
+      </div>
+
+      <div class="section-head"><div class="section-title">💼 حساب</div></div>
+      <div class="settings-list">
+        <button class="settings-item" onclick="showToast('اطلاعات شخصی')">
+          <span class="settings-icon">👤</span>
+          <span class="settings-label">اطلاعات شخصی</span>
+          <span class="settings-arrow">‹</span>
+        </button>
+        <button class="settings-item" onclick="showToast('لینک دعوت کپی شد 🔗')">
+          <span class="settings-icon">🔗</span>
+          <span class="settings-label">لینک دعوت دوستان</span>
+          <span class="settings-arrow">‹</span>
+        </button>
+        <button class="settings-item" onclick="showToast('گزارش‌ها 📊')">
+          <span class="settings-icon">📊</span>
+          <span class="settings-label">گزارش‌ها</span>
+          <span class="settings-arrow">‹</span>
+        </button>
+        <button class="settings-item" onclick="showToast('وضعیت: کاربر طلایی 🏆')">
+          <span class="settings-icon">🏆</span>
+          <span class="settings-label">سطح کاربری</span>
+          <span class="settings-arrow">طلایی ›</span>
+        </button>
+      </div>
+
+      <div class="section-head"><div class="section-title">🔔 اعلان‌ها</div></div>
+      <div class="settings-list">
+        <div class="settings-item toggle-item">
+          <span class="settings-icon">💸</span>
+          <span class="settings-label">اعلان تراکنش‌ها</span>
+          <button class="toggle-switch active" onclick="toggleSwitch(this)"></button>
+        </div>
+        <div class="settings-item toggle-item">
+          <span class="settings-icon">📈</span>
+          <span class="settings-label">اعلان قیمت</span>
+          <button class="toggle-switch active" onclick="toggleSwitch(this)"></button>
+        </div>
+        <div class="settings-item toggle-item">
+          <span class="settings-icon">🎁</span>
+          <span class="settings-label">اعلان جایزه‌ها</span>
+          <button class="toggle-switch active" onclick="toggleSwitch(this)"></button>
+        </div>
+      </div>
+
+      <div class="section-head"><div class="section-title">🎨 ظاهر</div></div>
+      <div class="settings-list">
+        <div class="settings-item toggle-item">
+          <span class="settings-icon">🌙</span>
+          <span class="settings-label">حالت تیره</span>
+          <button class="toggle-switch active" onclick="toggleSwitch(this)"></button>
+        </div>
+        <button class="settings-item" onclick="showToast('تغییر زبان')">
+          <span class="settings-icon">🌐</span>
+          <span class="settings-label">زبان</span>
+          <span class="settings-arrow">فارسی ›</span>
+        </button>
+      </div>
+
+      <div class="section-head"><div class="section-title">ℹ️ عمومی</div></div>
+      <div class="settings-list">
+        <button class="settings-item" onclick="showToast('قوانین 📖')">
+          <span class="settings-icon">📖</span>
+          <span class="settings-label">قوانین و مقررات</span>
+          <span class="settings-arrow">‹</span>
+        </button>
+        <button class="settings-item" onclick="showToast('پشتیبانی 💬')">
+          <span class="settings-icon">💬</span>
+          <span class="settings-label">پشتیبانی</span>
+          <span class="settings-arrow">‹</span>
+        </button>
+        <button class="settings-item" onclick="showToast('TAT Wallet v1.0')">
+          <span class="settings-icon">ℹ️</span>
+          <span class="settings-label">درباره TAT</span>
+          <span class="settings-arrow">v۱٫۰٫۰ ›</span>
+        </button>
+      </div>
+
+      <div style="padding: 20px 22px;">
+        <button class="btn" style="background: rgba(255,71,87,0.15); color: var(--danger); border: 1px solid rgba(255,71,87,0.3);" onclick="logout()">🚪 خروج از حساب</button>
+      </div>
+    </section>
+
+    <!-- ====== HISTORY ====== -->
+    <section class="page" data-page="history">
+      <div class="header">
+        <div>
+          <div class="greet">گزارش</div>
+          <div class="username">تاریخچه تراکنش‌ها</div>
+        </div>
+      </div>
+
+      <div class="portfolio-quick">
+        <div class="pq-grid">
+          <div class="pq-item">
+            <div class="pq-val" style="color: var(--success); font-size:18px;">+۲٬۵۰۰</div>
+            <div class="pq-name">ورودی این ماه</div>
+          </div>
+          <div class="pq-item">
+            <div class="pq-val" style="color: var(--danger); font-size:18px;">−۸۵۰</div>
+            <div class="pq-name">خروجی این ماه</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <button class="filter-chip active" data-filter="all">همه</button>
+        <button class="filter-chip" data-filter="in">ورودی</button>
+        <button class="filter-chip" data-filter="out">خروجی</button>
+        <button class="filter-chip" data-filter="reward">جایزه</button>
+        <button class="filter-chip" data-filter="stake">سود</button>
+      </div>
+
+      <div class="tx-list" id="historyList"></div>
+    </section>
+
+    <!-- ====== NOTIFICATIONS ====== -->
+    <section class="page" data-page="notifications">
+      <div class="header">
+        <div>
+          <div class="greet">مرکز</div>
+          <div class="username">اعلان‌ها</div>
+        </div>
+      </div>
+      <div class="tx-list" id="notificationsList"></div>
+    </section>
+
+  </div>
+
+  <!-- ============ NAV ============ -->
+  <nav class="nav" id="nav" style="display: none;">
+    <button class="nav-item active" data-nav="home" onclick="goTo('home')">
+      <span class="ico">🏠</span> خانه
+    </button>
+    <button class="nav-item" data-nav="market" onclick="goTo('market')">
+      <span class="ico">💱</span> بازار
+    </button>
+    <button class="nav-item" data-nav="portfolio" onclick="goTo('portfolio')">
+      <span class="ico">💼</span> دارایی
+    </button>
+    <button class="nav-item" data-nav="apps" onclick="goTo('apps')">
+      <span class="ico">🎮</span> اپ‌ها
+    </button>
+    <button class="nav-item" data-nav="settings" onclick="goTo('settings')">
+      <span class="ico">⚙️</span> تنظیمات
+    </button>
+  </nav>
+</div>
+
+<!-- ============ MODALS ============ -->
+
+<!-- ارسال -->
+<div class="modal" id="modal-send">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📤 ارسال TAT</div>
+    <div class="from-card">
+      <div class="from-label">از حساب شما</div>
+      <div class="from-number">۹۹۰۰ ۶۰۳۷ ۱۲۳۴ ۵۶۷۸</div>
+      <div class="from-balance">موجودی: ۱٬۲۵۰ TAT</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">آدرس یا آیدی گیرنده</label>
+      <input class="form-input" type="text" placeholder="@username یا شماره کارت">
+    </div>
+    <div class="form-group">
+      <label class="form-label">مقدار TAT</label>
+      <input class="form-input" id="sendAmount" type="number" placeholder="۰">
+    </div>
+    <div class="quick-amounts">
+      <button onclick="setAmount(10)">۱۰</button>
+      <button onclick="setAmount(50)">۵۰</button>
+      <button onclick="setAmount(100)">۱۰۰</button>
+      <button onclick="setAmount(500)">۵۰۰</button>
+      <button onclick="setAmount('max')">حداکثر</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">یادداشت (اختیاری)</label>
+      <input class="form-input" type="text" placeholder="مثلاً: هدیه تولد">
+    </div>
+    <button class="btn btn-primary" onclick="confirmSend()">ارسال TAT</button>
+  </div>
+</div>
+
+<!-- دریافت -->
+<div class="modal" id="modal-receive">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📥 دریافت TAT</div>
+    <div class="qr-box">
+      <svg viewBox="0 0 100 100">
+        <rect width="100" height="100" fill="#fff"/>
+        <g fill="#0A0F1E">
+          <rect x="5" y="5" width="25" height="25"/>
+          <rect x="10" y="10" width="15" height="15" fill="#fff"/>
+          <rect x="13" y="13" width="9" height="9" fill="#0A0F1E"/>
+          <rect x="70" y="5" width="25" height="25"/>
+          <rect x="75" y="10" width="15" height="15" fill="#fff"/>
+          <rect x="78" y="13" width="9" height="9" fill="#0A0F1E"/>
+          <rect x="5" y="70" width="25" height="25"/>
+          <rect x="10" y="75" width="15" height="15" fill="#fff"/>
+          <rect x="13" y="78" width="9" height="9" fill="#0A0F1E"/>
+          <rect x="40" y="10" width="5" height="5"/>
+          <rect x="50" y="10" width="5" height="5"/>
+          <rect x="40" y="20" width="5" height="5"/>
+          <rect x="55" y="20" width="5" height="5"/>
+          <rect x="45" y="30" width="10" height="5"/>
+          <rect x="40" y="40" width="5" height="5"/>
+          <rect x="50" y="45" width="5" height="5"/>
+          <rect x="60" y="40" width="5" height="5"/>
+          <rect x="40" y="55" width="5" height="5"/>
+          <rect x="55" y="55" width="5" height="5"/>
+          <rect x="70" y="40" width="5" height="5"/>
+          <rect x="85" y="40" width="5" height="5"/>
+          <rect x="75" y="50" width="5" height="5"/>
+          <rect x="90" y="55" width="5" height="5"/>
+          <rect x="70" y="65" width="5" height="5"/>
+          <rect x="80" y="75" width="5" height="5"/>
+          <rect x="90" y="85" width="5" height="5"/>
+          <rect x="40" y="70" width="10" height="5"/>
+          <rect x="55" y="70" width="5" height="5"/>
+          <rect x="40" y="85" width="5" height="5"/>
+          <rect x="55" y="85" width="10" height="5"/>
+        </g>
+      </svg>
+    </div>
+    <div class="user-id-box" onclick="copyText('@ali_7x3k')">
+      <div>
+        <div class="label">آیدی اختصاصی</div>
+        <div class="value">@ali_7x3k</div>
+      </div>
+      <span style="color:var(--primary);">📋</span>
+    </div>
+    <div class="user-id-box" onclick="copyText('۹۹۰۰ ۶۰۳۷ ۱۲۳۴ ۵۶۷۸')">
+      <div>
+        <div class="label">شماره کارت</div>
+        <div class="value">۹۹۰۰ ۶۰۳۷ ۱۲۳۴ ۵۶۷۸</div>
+      </div>
+      <span style="color:var(--primary);">📋</span>
+    </div>
+    <button class="btn btn-ghost" onclick="closeModal()">بستن</button>
+  </div>
+</div>
+
+<!-- جزئیات ارز -->
+<div class="modal" id="modal-asset">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="asset-detail">
+      <div class="asset-detail-coin" id="assetDetailCoin"></div>
+      <div class="asset-detail-name" id="assetDetailName">TAT</div>
+      <div class="asset-detail-price" id="assetDetailPrice">۱۰۰ تومان</div>
+      <div class="asset-detail-change up" id="assetDetailChange">↑ ۰٫۹۷٪</div>
+    </div>
+
+    <div class="chart-tabs" style="margin: 16px 0;">
+      <button class="chart-tab active">۲۴ ساعت</button>
+      <button class="chart-tab">۷ روز</button>
+      <button class="chart-tab">۳۰ روز</button>
+      <button class="chart-tab">۱ سال</button>
+    </div>
+
+    <svg class="asset-chart" viewBox="0 0 300 100" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="assetGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#00B894" stop-opacity="0.5"/>
+          <stop offset="100%" stop-color="#00B894" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <path d="M0,70 L30,60 L60,65 L90,45 L120,55 L150,30 L180,40 L210,25 L240,35 L270,20 L300,28 L300,100 L0,100 Z" fill="url(#assetGrad)"/>
+      <path d="M0,70 L30,60 L60,65 L90,45 L120,55 L150,30 L180,40 L210,25 L240,35 L270,20 L300,28" fill="none" stroke="#00B894" stroke-width="2"/>
+    </svg>
+
+    <div class="asset-stats">
+      <div class="asset-stat">
+        <div class="asset-stat-label">بالاترین</div>
+        <div class="asset-stat-value">۱۰۱ تومان</div>
+      </div>
+      <div class="asset-stat">
+        <div class="asset-stat-label">پایین‌ترین</div>
+        <div class="asset-stat-value">۹۹ تومان</div>
+      </div>
+      <div class="asset-stat">
+        <div class="asset-stat-label">حجم</div>
+        <div class="asset-stat-value">۵٬۰۰۰</div>
+      </div>
+    </div>
+
+    <div class="asset-holdings">
+      <div class="asset-holdings-label">دارایی شما</div>
+      <div class="asset-holdings-value">۱٬۲۵۰ TAT</div>
+      <div class="asset-holdings-fiat">≈ ۱۲۵٬۰۰۰ تومان</div>
+    </div>
+
+    <div class="asset-actions">
+      <button class="btn btn-buy" onclick="closeModal(); openBuyModal('buy')">🟢 خرید</button>
+      <button class="btn btn-sell" onclick="closeModal(); openBuyModal('sell')">🔴 فروش</button>
+    </div>
+  </div>
+</div>
+
+<!-- خرید/فروش -->
+<div class="modal" id="modal-buy">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="buyModalTitle">🟢 خرید TAT</div>
+    <div class="from-card">
+      <div class="from-label">موجودی تومانی</div>
+      <div class="from-number" id="buyBalance">۱٬۲۵۰٬۰۰۰ تومان</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">مقدار (تومان)</label>
+      <input class="form-input" id="buyAmount" type="number" placeholder="۰">
+    </div>
+    <div class="quick-amounts">
+      <button onclick="setBuyAmount(10)">۱۰٪</button>
+      <button onclick="setBuyAmount(25)">۲۵٪</button>
+      <button onclick="setBuyAmount(50)">۵۰٪</button>
+      <button onclick="setBuyAmount(100)">۱۰۰٪</button>
+    </div>
+    <div class="buy-summary">
+      <div class="buy-row"><span>قیمت</span><span>۱۰۰ تومان</span></div>
+      <div class="buy-row"><span>مقدار</span><span>۵۰۰ TAT</span></div>
+      <div class="buy-row"><span>کارمزد (۱٪)</span><span>۵۰۰ تومان</span></div>
+      <div class="buy-row total"><span>مجموع</span><span>۵۰٬۵۰۰ تومان</span></div>
+    </div>
+    <button class="btn btn-primary" onclick="confirmBuy()">تأیید خرید</button>
+  </div>
+</div>
+
+<!-- جزئیات تراکنش -->
+<div class="modal" id="modal-tx">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="tx-detail-icon" id="txDetailIcon">🎁</div>
+    <div class="tx-detail-amount" id="txDetailAmount">+۵۰</div>
+    <div class="tx-detail-title" id="txDetailTitle">جایزه Space Run</div>
+    <div class="tx-detail-rows">
+      <div class="tx-detail-row"><span>وضعیت</span><span class="status-success">✓ موفق</span></div>
+      <div class="tx-detail-row"><span>تاریخ</span><span>۱۴۰۳/۰۸/۱۵ - ۱۴:۳۲</span></div>
+      <div class="tx-detail-row"><span>شماره پیگیری</span><span class="mono">TAT-2458-KX9</span></div>
+      <div class="tx-detail-row"><span>نوع</span><span>جایزه بازی</span></div>
+      <div class="tx-detail-row"><span>منبع</span><span>Space Run</span></div>
+    </div>
+    <button class="btn btn-ghost" onclick="closeModal()">بستن</button>
+  </div>
+</div>
+
+<!-- جزئیات اپ -->
+<div class="modal" id="modal-app">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="app-detail-header">
+      <div class="app-detail-icon" id="appDetailIcon">🚀</div>
+      <div class="app-detail-name" id="appDetailName">Space Run</div>
+      <div class="app-detail-meta">متصل از ۱ ماه پیش</div>
+    </div>
+
+    <div class="app-stats-box">
+      <div class="app-stat-item">
+        <div class="app-stat-label">موجودی</div>
+        <div class="app-stat-value">۲۵۰ TAT</div>
+      </div>
+      <div class="app-stat-item">
+        <div class="app-stat-label">واریز</div>
+        <div class="app-stat-value in">+۵۰۰</div>
+      </div>
+      <div class="app-stat-item">
+        <div class="app-stat-label">برداشت</div>
+        <div class="app-stat-value out">−۲۵۰</div>
+      </div>
+    </div>
+
+    <div class="section-title" style="padding: 16px 0 8px;">🔐 مجوزها</div>
+    <div class="permissions">
+      <div class="perm-item"><span>✅</span> دریافت سکه</div>
+      <div class="perm-item"><span>✅</span> ارسال سکه</div>
+      <div class="perm-item"><span>✅</span> مشاهده موجودی</div>
+      <div class="perm-item disabled"><span>❌</span> دسترسی به اطلاعات شخصی</div>
+    </div>
+
+    <button class="btn btn-danger" style="margin-top: 16px;" onclick="showToast('اتصال قطع شد')">قطع اتصال</button>
+    <button class="btn btn-ghost" onclick="closeModal()">بستن</button>
+  </div>
+</div>
+
+<!-- سپرده‌گذاری -->
+<div class="modal" id="modal-stake">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">💰 سپرده‌گذاری</div>
+    <div class="from-card">
+      <div class="from-label">موجودی TAT</div>
+      <div class="from-number">۱٬۲۵۰ TAT</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">مقدار سپرده</label>
+      <input class="form-input" id="stakeAmount" type="number" placeholder="۰">
+    </div>
+    <div class="quick-amounts">
+      <button onclick="setStakeAmount(25)">۲۵٪</button>
+      <button onclick="setStakeAmount(50)">۵۰٪</button>
+      <button onclick="setStakeAmount(75)">۷۵٪</button>
+      <button onclick="setStakeAmount(100)">۱۰۰٪</button>
+    </div>
+    <div class="buy-summary">
+      <div class="buy-row"><span>نوع سپرده</span><span id="stakeTypeLabel">انعطاف‌پذیر</span></div>
+      <div class="buy-row"><span>نرخ سود</span><span id="stakeRateLabel">۲۰٪ سالانه</span></div>
+      <div class="buy-row"><span>سود روزانه</span><span id="stakeDailyLabel">۰٫۶۸ TAT</span></div>
+      <div class="buy-row total"><span>سود سالانه</span><span id="stakeYearlyLabel">۲۵۰ TAT</span></div>
+    </div>
+    <button class="btn btn-primary" onclick="confirmStake()">تأیید سپرده</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
