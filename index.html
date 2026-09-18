@@ -12,7 +12,7 @@
 
 <div class="app" id="app">
 
-  <!-- ============ SPLASH ============ -->
+  <!-- SPLASH -->
   <div class="splash" id="splash">
     <div class="splash-logo">
       <div class="splash-coin" id="splashCoin"></div>
@@ -22,7 +22,7 @@
     <div class="splash-loader"><span></span></div>
   </div>
 
-  <!-- ============ AUTH ============ -->
+  <!-- AUTH -->
   <div class="page auth-page" id="authPage">
     <div class="auth-header">
       <div class="auth-coin" id="authCoin"></div>
@@ -36,7 +36,7 @@
     <button class="btn btn-primary" onclick="login()">ورود به کیف پول</button>
   </div>
 
-  <!-- ============ MAIN APP ============ -->
+  <!-- MAIN APP -->
   <div class="main-app" id="mainApp" style="display: none;">
 
     <!-- ====== HOME ====== -->
@@ -54,10 +54,9 @@
         </div>
       </div>
 
-      <!-- کارت سه‌بعدی -->
+      <!-- CARD 3D -->
       <div class="card-scene">
         <div class="card-flip" id="cardFlip" onclick="flipCard()">
-          <!-- روی کارت -->
           <div class="card-face card-front" id="cardFront">
             <div class="card-top-row">
               <div class="brand-logo">
@@ -72,7 +71,6 @@
               <div class="network-logo">TAT</div>
             </div>
           </div>
-          <!-- پشت کارت -->
           <div class="card-face card-back">
             <div class="magnetic-strip"></div>
             <div class="card-back-content">
@@ -97,7 +95,7 @@
 
       <div class="flip-hint">🔄 برای دیدن پشت کارت، لمس کن</div>
 
-      <!-- موجودی -->
+      <!-- BALANCE -->
       <div class="balance-section">
         <div class="balance-label">
           موجودی کل
@@ -110,7 +108,7 @@
         <div class="balance-fiat" id="balanceFiatBox">≈ <strong id="balanceFiat">۱۲۵٬۰۰۰ تومان</strong></div>
       </div>
 
-      <!-- دکمه‌های عملیات -->
+      <!-- ACTIONS -->
       <div class="actions">
         <button class="action-btn" onclick="openModal('send')">
           <span class="ico">📤</span> ارسال
@@ -123,7 +121,7 @@
         </button>
       </div>
 
-      <!-- دارایی‌های خلاصه -->
+      <!-- PORTFOLIO QUICK -->
       <div class="section-head">
         <div class="section-title">💼 دارایی‌های من</div>
         <div class="section-link" onclick="goTo('portfolio')">مشاهده همه</div>
@@ -148,7 +146,7 @@
         </div>
       </div>
 
-      <!-- نمودار TAT -->
+      <!-- CHART -->
       <div class="section-head">
         <div class="section-title">📊 ارزش TAT</div>
         <div class="chart-change">↑ ۰٫۹۷٪</div>
@@ -175,7 +173,7 @@
         </div>
       </div>
 
-      <!-- تراکنش‌ها -->
+      <!-- TX -->
       <div class="section-head">
         <div class="section-title">تراکنش‌های اخیر</div>
         <div class="section-link" onclick="goTo('history')">مشاهده همه</div>
@@ -363,12 +361,12 @@
           <div class="profile-name" id="profileName">علی احمدی</div>
           <div class="profile-id" id="profileId">@ali_7x3k</div>
         </div>
-        <button class="profile-edit" onclick="showToast('ویرایش پروفایل')">✏️</button>
+        <button class="profile-edit" onclick="openSettingsModal('personal-info')">✏️</button>
       </div>
 
       <div class="section-head"><div class="section-title">🔐 امنیت</div></div>
       <div class="settings-list">
-        <button class="settings-item" onclick="showToast('تغییر رمز 🔐')">
+        <button class="settings-item" onclick="openSettingsModal('change-password')">
           <span class="settings-icon">🔐</span>
           <span class="settings-label">تغییر رمز عبور</span>
           <span class="settings-arrow">‹</span>
@@ -376,33 +374,38 @@
         <div class="settings-item toggle-item">
           <span class="settings-icon">👆</span>
           <span class="settings-label">ورود با اثر انگشت</span>
-          <button class="toggle-switch active" onclick="toggleSwitch(this)"></button>
+          <button class="toggle-switch" id="toggleFingerprint" onclick="toggleFingerprint(this)"></button>
         </div>
         <div class="settings-item toggle-item">
           <span class="settings-icon">🔑</span>
           <span class="settings-label">تایید دو مرحله‌ای (2FA)</span>
-          <button class="toggle-switch" onclick="toggleSwitch(this)"></button>
+          <button class="toggle-switch" id="toggle2FA" onclick="toggle2FA(this)"></button>
         </div>
+        <button class="settings-item" onclick="openSettingsModal('devices')">
+          <span class="settings-icon">📱</span>
+          <span class="settings-label">دستگاه‌های متصل</span>
+          <span class="settings-arrow">۳ دستگاه ›</span>
+        </button>
       </div>
 
       <div class="section-head"><div class="section-title">💼 حساب</div></div>
       <div class="settings-list">
-        <button class="settings-item" onclick="showToast('اطلاعات شخصی')">
+        <button class="settings-item" onclick="openSettingsModal('personal-info')">
           <span class="settings-icon">👤</span>
           <span class="settings-label">اطلاعات شخصی</span>
           <span class="settings-arrow">‹</span>
         </button>
-        <button class="settings-item" onclick="showToast('لینک دعوت کپی شد 🔗')">
+        <button class="settings-item" onclick="openSettingsModal('invite')">
           <span class="settings-icon">🔗</span>
           <span class="settings-label">لینک دعوت دوستان</span>
           <span class="settings-arrow">‹</span>
         </button>
-        <button class="settings-item" onclick="showToast('گزارش‌ها 📊')">
+        <button class="settings-item" onclick="openSettingsModal('reports')">
           <span class="settings-icon">📊</span>
           <span class="settings-label">گزارش‌ها</span>
           <span class="settings-arrow">‹</span>
         </button>
-        <button class="settings-item" onclick="showToast('وضعیت: کاربر طلایی 🏆')">
+        <button class="settings-item" onclick="openSettingsModal('tier')">
           <span class="settings-icon">🏆</span>
           <span class="settings-label">سطح کاربری</span>
           <span class="settings-arrow">طلایی ›</span>
@@ -414,17 +417,17 @@
         <div class="settings-item toggle-item">
           <span class="settings-icon">💸</span>
           <span class="settings-label">اعلان تراکنش‌ها</span>
-          <button class="toggle-switch active" onclick="toggleSwitch(this)"></button>
+          <button class="toggle-switch active" id="toggleTxNotify" onclick="toggleSimple(this, 'txNotify')"></button>
         </div>
         <div class="settings-item toggle-item">
           <span class="settings-icon">📈</span>
           <span class="settings-label">اعلان قیمت</span>
-          <button class="toggle-switch active" onclick="toggleSwitch(this)"></button>
+          <button class="toggle-switch active" id="togglePriceNotify" onclick="toggleSimple(this, 'priceNotify')"></button>
         </div>
         <div class="settings-item toggle-item">
           <span class="settings-icon">🎁</span>
           <span class="settings-label">اعلان جایزه‌ها</span>
-          <button class="toggle-switch active" onclick="toggleSwitch(this)"></button>
+          <button class="toggle-switch active" id="toggleRewardNotify" onclick="toggleSimple(this, 'rewardNotify')"></button>
         </div>
       </div>
 
@@ -433,28 +436,38 @@
         <div class="settings-item toggle-item">
           <span class="settings-icon">🌙</span>
           <span class="settings-label">حالت تیره</span>
-          <button class="toggle-switch active" onclick="toggleSwitch(this)"></button>
+          <button class="toggle-switch active" id="toggleTheme" onclick="toggleThemeSetting(this)"></button>
         </div>
-        <button class="settings-item" onclick="showToast('تغییر زبان')">
+        <button class="settings-item" onclick="openSettingsModal('language')">
           <span class="settings-icon">🌐</span>
           <span class="settings-label">زبان</span>
-          <span class="settings-arrow">فارسی ›</span>
+          <span class="settings-arrow" id="langBadge">فارسی ›</span>
+        </button>
+        <button class="settings-item" onclick="openSettingsModal('font-size')">
+          <span class="settings-icon">📏</span>
+          <span class="settings-label">اندازه فونت</span>
+          <span class="settings-arrow" id="fontBadge">متوسط ›</span>
         </button>
       </div>
 
       <div class="section-head"><div class="section-title">ℹ️ عمومی</div></div>
       <div class="settings-list">
-        <button class="settings-item" onclick="showToast('قوانین 📖')">
+        <button class="settings-item" onclick="openSettingsModal('rules')">
           <span class="settings-icon">📖</span>
           <span class="settings-label">قوانین و مقررات</span>
           <span class="settings-arrow">‹</span>
         </button>
-        <button class="settings-item" onclick="showToast('پشتیبانی 💬')">
+        <button class="settings-item" onclick="openSettingsModal('faq')">
+          <span class="settings-icon">❓</span>
+          <span class="settings-label">سوالات متداول</span>
+          <span class="settings-arrow">‹</span>
+        </button>
+        <button class="settings-item" onclick="openSettingsModal('support')">
           <span class="settings-icon">💬</span>
           <span class="settings-label">پشتیبانی</span>
           <span class="settings-arrow">‹</span>
         </button>
-        <button class="settings-item" onclick="showToast('TAT Wallet v1.0')">
+        <button class="settings-item" onclick="openSettingsModal('about')">
           <span class="settings-icon">ℹ️</span>
           <span class="settings-label">درباره TAT</span>
           <span class="settings-arrow">v۱٫۰٫۰ ›</span>
@@ -512,7 +525,7 @@
 
   </div>
 
-  <!-- ============ NAV ============ -->
+  <!-- NAV -->
   <nav class="nav" id="nav" style="display: none;">
     <button class="nav-item active" data-nav="home" onclick="goTo('home')">
       <span class="ico">🏠</span> خانه
@@ -532,7 +545,9 @@
   </nav>
 </div>
 
-<!-- ============ MODALS ============ -->
+<!-- ═══════════════════════════════════════ -->
+<!-- MODALS -->
+<!-- ═══════════════════════════════════════ -->
 
 <!-- ارسال -->
 <div class="modal" id="modal-send">
@@ -795,6 +810,523 @@
       <div class="buy-row total"><span>سود سالانه</span><span id="stakeYearlyLabel">۲۵۰ TAT</span></div>
     </div>
     <button class="btn btn-primary" onclick="confirmStake()">تأیید سپرده</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- SETTINGS MODALS -->
+<!-- ═══════════════════════════════════════ -->
+
+<!-- تغییر رمز -->
+<div class="modal" id="modal-change-password">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🔐 تغییر رمز عبور</div>
+    <div class="form-group">
+      <label class="form-label">رمز فعلی</label>
+      <input class="form-input" type="password" id="oldPassword" placeholder="رمز فعلی را وارد کنید">
+    </div>
+    <div class="form-group">
+      <label class="form-label">رمز جدید</label>
+      <input class="form-input" type="password" id="newPassword" placeholder="حداقل ۶ کاراکتر">
+    </div>
+    <div class="form-group">
+      <label class="form-label">تأیید رمز جدید</label>
+      <input class="form-input" type="password" id="confirmPassword" placeholder="رمز جدید را دوباره وارد کنید">
+    </div>
+    <div class="password-strength" id="passwordStrength"></div>
+    <button class="btn btn-primary" onclick="savePassword()">ذخیره رمز جدید</button>
+    <button class="btn btn-ghost" onclick="closeModal()">لغو</button>
+  </div>
+</div>
+
+<!-- 2FA -->
+<div class="modal" id="modal-2fa">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🔑 فعال‌سازی 2FA</div>
+    <div class="step-box active">
+      <div class="step-num">۱</div>
+      <div class="step-text">اپ Google Authenticator رو نصب کن</div>
+    </div>
+    <div class="step-box">
+      <div class="step-num">۲</div>
+      <div class="step-text">این QR رو اسکن کن</div>
+    </div>
+    <div class="qr-container">
+      <svg viewBox="0 0 100 100" style="width:150px;height:150px;">
+        <rect width="100" height="100" fill="#fff"/>
+        <g fill="#0A0F1E">
+          <rect x="5" y="5" width="25" height="25"/>
+          <rect x="10" y="10" width="15" height="15" fill="#fff"/>
+          <rect x="13" y="13" width="9" height="9" fill="#0A0F1E"/>
+          <rect x="70" y="5" width="25" height="25"/>
+          <rect x="75" y="10" width="15" height="15" fill="#fff"/>
+          <rect x="78" y="13" width="9" height="9" fill="#0A0F1E"/>
+          <rect x="5" y="70" width="25" height="25"/>
+          <rect x="10" y="75" width="15" height="15" fill="#fff"/>
+          <rect x="13" y="78" width="9" height="9" fill="#0A0F1E"/>
+          <rect x="40" y="10" width="5" height="5"/>
+          <rect x="50" y="10" width="5" height="5"/>
+          <rect x="40" y="20" width="5" height="5"/>
+          <rect x="55" y="20" width="5" height="5"/>
+          <rect x="45" y="30" width="10" height="5"/>
+          <rect x="40" y="40" width="5" height="5"/>
+          <rect x="50" y="45" width="5" height="5"/>
+          <rect x="60" y="40" width="5" height="5"/>
+          <rect x="70" y="40" width="5" height="5"/>
+          <rect x="85" y="40" width="5" height="5"/>
+          <rect x="75" y="50" width="5" height="5"/>
+          <rect x="90" y="55" width="5" height="5"/>
+          <rect x="70" y="65" width="5" height="5"/>
+          <rect x="80" y="75" width="5" height="5"/>
+          <rect x="90" y="85" width="5" height="5"/>
+        </g>
+      </svg>
+    </div>
+    <div class="secret-code" onclick="copyText('TAT-2FA-SECRET-KEY-2025')">
+      <div class="label">یا کد رو دستی وارد کن:</div>
+      <div class="value" style="direction:ltr;">TAT-2FA-SECRET-KEY-2025</div>
+    </div>
+    <div class="step-box">
+      <div class="step-num">۳</div>
+      <div class="step-text">کد ۶ رقمی اپ رو وارد کن</div>
+    </div>
+    <div class="form-group">
+      <input class="form-input" type="text" id="twoFACode" placeholder="۱۲۳۴۵۶" maxlength="6" style="text-align:center; font-size:20px; letter-spacing:8px;">
+    </div>
+    <button class="btn btn-primary" onclick="activate2FA()">فعال‌سازی</button>
+    <button class="btn btn-ghost" onclick="closeModal()">لغو</button>
+  </div>
+</div>
+
+<!-- اطلاعات شخصی -->
+<div class="modal" id="modal-personal-info">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">👤 اطلاعات شخصی</div>
+    <div class="avatar-large" id="personalAvatar">👤</div>
+    <div class="form-group">
+      <label class="form-label">نام و نام خانوادگی</label>
+      <input class="form-input" type="text" id="editName" value="علی احمدی">
+    </div>
+    <div class="form-group">
+      <label class="form-label">شماره موبایل</label>
+      <input class="form-input" type="tel" id="editPhone" value="۰۹۱۲۳۴۵۶۷۸۹">
+    </div>
+    <div class="form-group">
+      <label class="form-label">ایمیل (اختیاری)</label>
+      <input class="form-input" type="email" id="editEmail" placeholder="example@email.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">آیدی یکتا</label>
+      <input class="form-input" type="text" value="@ali_7x3k" readonly style="opacity:0.6;">
+    </div>
+    <button class="btn btn-primary" onclick="savePersonalInfo()">ذخیره تغییرات</button>
+    <button class="btn btn-ghost" onclick="closeModal()">لغو</button>
+  </div>
+</div>
+
+<!-- لینک دعوت -->
+<div class="modal" id="modal-invite">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🔗 دعوت دوستان</div>
+    <div class="invite-hero">
+      <div class="invite-coin"></div>
+      <div class="invite-title">با هر دعوت ۱۰۰ TAT بگیر!</div>
+      <div class="invite-sub">دوستانت هم ۵۰ TAT هدیه می‌گیرن</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">لینک اختصاصی شما</label>
+      <div class="link-box">
+        <div class="link-value" id="inviteLink">https://tat.wallet/invite/ali_7x3k</div>
+        <button class="link-copy" onclick="copyInviteLink()">📋</button>
+      </div>
+    </div>
+    <div class="stats-row-2">
+      <div class="stat-box">
+        <div class="stat-box-label">دعوت شده</div>
+        <div class="stat-box-value" id="inviteCount">۰</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-box-label">جایزه کسب‌شده</div>
+        <div class="stat-box-value" id="inviteReward">۰</div>
+      </div>
+    </div>
+    <div class="share-buttons">
+      <button class="share-btn" onclick="shareTelegram()">
+        <span>📱</span> تلگرام
+      </button>
+      <button class="share-btn" onclick="shareWhatsApp()">
+        <span>💬</span> واتساپ
+      </button>
+      <button class="share-btn" onclick="shareMore()">
+        <span>📤</span> بیشتر
+      </button>
+    </div>
+    <button class="btn btn-ghost" onclick="closeModal()">بستن</button>
+  </div>
+</div>
+
+<!-- گزارش‌ها -->
+<div class="modal" id="modal-reports">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📊 گزارش‌ها</div>
+    <div class="report-tabs">
+      <button class="report-tab active" onclick="switchReport('week', this)">هفته</button>
+      <button class="report-tab" onclick="switchReport('month', this)">ماه</button>
+      <button class="report-tab" onclick="switchReport('year', this)">سال</button>
+    </div>
+    <div class="report-summary">
+      <div class="report-row">
+        <span>کل واریز</span>
+        <span class="in">+۲٬۵۰۰ TAT</span>
+      </div>
+      <div class="report-row">
+        <span>کل برداشت</span>
+        <span class="out">−۸۵۰ TAT</span>
+      </div>
+      <div class="report-row">
+        <span>سود سپرده</span>
+        <span class="in">+۱۲۵ TAT</span>
+      </div>
+      <div class="report-row total">
+        <span>خالص</span>
+        <span>+۱٬۷۷۵ TAT</span>
+      </div>
+    </div>
+    <div class="report-chart">
+      <div class="bar-chart">
+        <div class="bar" style="height: 60%"><span>شنبه</span></div>
+        <div class="bar" style="height: 85%"><span>یک‌شنبه</span></div>
+        <div class="bar" style="height: 45%"><span>دوشنبه</span></div>
+        <div class="bar" style="height: 90%"><span>سه‌شنبه</span></div>
+        <div class="bar" style="height: 70%"><span>چهارشنبه</span></div>
+        <div class="bar" style="height: 55%"><span>پنج‌شنبه</span></div>
+        <div class="bar" style="height: 100%"><span>جمعه</span></div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="downloadReport()">📥 دانلود گزارش (Excel)</button>
+    <button class="btn btn-ghost" onclick="closeModal()">بستن</button>
+  </div>
+</div>
+
+<!-- سطح کاربری -->
+<div class="modal" id="modal-tier">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🏆 سطح کاربری</div>
+    <div class="tier-current">
+      <div class="tier-current-badge">🏆</div>
+      <div class="tier-current-name">کاربر طلایی</div>
+      <div class="tier-current-desc">۱۲٬۵۰۰ تراکنش تا الماسی</div>
+    </div>
+    <div class="tier-progress-large">
+      <div class="tier-progress-bar">
+        <div class="tier-progress-fill" style="width: 62%"></div>
+      </div>
+      <div class="tier-progress-text">۶۲٪ به سطح الماسی</div>
+    </div>
+    <div class="tier-list">
+      <div class="tier-item">
+        <div class="tier-icon">🥉</div>
+        <div class="tier-info">
+          <div class="tier-name">برنزی</div>
+          <div class="tier-desc">۰ - ۱۰۰۰ تراکنش</div>
+        </div>
+        <div class="tier-status done">✓</div>
+      </div>
+      <div class="tier-item">
+        <div class="tier-icon">🥈</div>
+        <div class="tier-info">
+          <div class="tier-name">نقره‌ای</div>
+          <div class="tier-desc">۱۰۰۰ - ۱۰٬۰۰۰ تراکنش</div>
+        </div>
+        <div class="tier-status done">✓</div>
+      </div>
+      <div class="tier-item active">
+        <div class="tier-icon">🥇</div>
+        <div class="tier-info">
+          <div class="tier-name">طلایی (سطح فعلی)</div>
+          <div class="tier-desc">۱۰٬۰۰۰ - ۱۰۰٬۰۰۰ تراکنش</div>
+        </div>
+        <div class="tier-status current">فعلی</div>
+      </div>
+      <div class="tier-item">
+        <div class="tier-icon">💎</div>
+        <div class="tier-info">
+          <div class="tier-name">الماسی</div>
+          <div class="tier-desc">۱۰۰٬۰۰۰+ تراکنش</div>
+        </div>
+        <div class="tier-status locked">🔒</div>
+      </div>
+    </div>
+    <div class="tier-benefits">
+      <div class="tier-benefits-title">✨ مزایای سطح طلایی:</div>
+      <div class="benefit-item">✅ سود سپرده +۵٪</div>
+      <div class="benefit-item">✅ کارمزد معاملات -۲۰٪</div>
+      <div class="benefit-item">✅ پشتیبانی اولویت‌دار</div>
+      <div class="benefit-item">✅ دسترسی به اپ‌های ویژه</div>
+    </div>
+    <button class="btn btn-ghost" onclick="closeModal()">بستن</button>
+  </div>
+</div>
+
+<!-- زبان -->
+<div class="modal" id="modal-language">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🌐 انتخاب زبان</div>
+    <div class="lang-options">
+      <button class="lang-option active" onclick="setLanguage('fa', this)">
+        <span class="lang-flag">🇮🇷</span>
+        <span class="lang-name">فارسی</span>
+        <span class="lang-check">✓</span>
+      </button>
+      <button class="lang-option" onclick="setLanguage('en', this)">
+        <span class="lang-flag">🇬🇧</span>
+        <span class="lang-name">English</span>
+      </button>
+      <button class="lang-option" onclick="setLanguage('ar', this)">
+        <span class="lang-flag">🇸🇦</span>
+        <span class="lang-name">العربية</span>
+      </button>
+    </div>
+    <button class="btn btn-ghost" onclick="closeModal()">بستن</button>
+  </div>
+</div>
+
+<!-- قوانین -->
+<div class="modal" id="modal-rules">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📖 قوانین و مقررات</div>
+    <div class="rules-content">
+      <h4>۱. پذیرش قوانین</h4>
+      <p>با استفاده از کیف پول TAT، شما تمام قوانین و مقررات این پلتفرم را می‌پذیرید.</p>
+      <h4>۲. استفاده مجاز</h4>
+      <p>استفاده از این کیف پول تنها برای مقاصد قانونی مجاز است. هرگونه تلاش برای نفوذ، تقلب یا سوءاستفاده ممنوع است.</p>
+      <h4>۳. امنیت حساب</h4>
+      <p>شما مسئول حفظ امنیت رمز عبور و اطلاعات حساب خود هستید. TAT در قبال از دست دادن اطلاعات ناشی از سهل‌انگاری مسئول نیست.</p>
+      <h4>۴. تراکنش‌ها</h4>
+      <p>تمام تراکنش‌ها نهایی هستند. بازگشت تراکنش تنها در صورت تأیید ادمین امکان‌پذیر است.</p>
+      <h4>۵. سپرده‌گذاری</h4>
+      <p>سود سپرده‌گذاری متغیر است و توسط تیم TAT تعیین می‌شود. TAT حق تغییر نرخ سود را دارد.</p>
+      <h4>۶. حریم خصوصی</h4>
+      <p>اطلاعات شما نزد TAT محفوظ است و به هیچ شخص ثالثی فروخته نمی‌شود.</p>
+      <h4>۷. تغییرات</h4>
+      <p>TAT حق تغییر این قوانین را در هر زمان محفوظ می‌دارد.</p>
+      <div class="rules-date">آخرین بروزرسانی: ۱۴۰۵/۰۱/۰۱</div>
+    </div>
+    <button class="btn btn-ghost" onclick="closeModal()">بستن</button>
+  </div>
+</div>
+
+<!-- FAQ -->
+<div class="modal" id="modal-faq">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">❓ سوالات متداول</div>
+    <div class="faq-list">
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">
+          <span>چطور سکه TAT بخرم؟</span>
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-a">به بخش بازار برو، روی TAT کلیک کن و دکمه خرید رو بزن.</div>
+      </div>
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">
+          <span>چطور سپرده‌گذاری کنم؟</span>
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-a">به بخش سپرده‌گذاری برو، نوع سپرده رو انتخاب کن و مقدار مورد نظر رو وارد کن.</div>
+      </div>
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">
+          <span>سود سپرده چطور محاسبه میشه؟</span>
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-a">سود به صورت روزانه و بر اساس نرخ سالانه محاسبه و واریز میشه.</div>
+      </div>
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">
+          <span>آیا می‌تونم تراکنش رو لغو کنم؟</span>
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-a">تراکنش‌ها پس از تأیید نهایی قابل لغو نیستند. فقط در صورت خطا با پشتیبانی تماس بگیر.</div>
+      </div>
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">
+          <span>چطور با دوستانم سکه به اشتراک بذارم؟</span>
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-a">از بخش ارسال، آیدی یا شماره کارت دوستت رو وارد کن و مقدار رو مشخص کن.</div>
+      </div>
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">
+          <span>کارمزد تراکنش چقدره؟</span>
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-a">کارمزد ارسال ۰٫۵٪ و کارمزد معاملات ۱٪ است.</div>
+      </div>
+    </div>
+    <button class="btn btn-ghost" onclick="closeModal()">بستن</button>
+  </div>
+</div>
+
+<!-- پشتیبانی -->
+<div class="modal" id="modal-support">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">💬 پشتیبانی</div>
+    <div class="support-options">
+      <div class="support-option" onclick="openChat()">
+        <div class="support-icon">💬</div>
+        <div class="support-info">
+          <div class="support-title">چت زنده</div>
+          <div class="support-desc">پاسخ در کمتر از ۵ دقیقه</div>
+        </div>
+        <div class="support-status online">آنلاین</div>
+      </div>
+      <div class="support-option" onclick="openTelegram()">
+        <div class="support-icon">📱</div>
+        <div class="support-info">
+          <div class="support-title">تلگرام</div>
+          <div class="support-desc">@TATWalletSupport</div>
+        </div>
+      </div>
+      <div class="support-option" onclick="openEmail()">
+        <div class="support-icon">📧</div>
+        <div class="support-info">
+          <div class="support-title">ایمیل</div>
+          <div class="support-desc">support@tat.wallet</div>
+        </div>
+      </div>
+    </div>
+    <div class="section-title" style="padding: 16px 0 8px; font-size: 13px;">📝 ارسال تیکت</div>
+    <div class="form-group">
+      <label class="form-label">موضوع</label>
+      <select class="form-input" id="ticketSubject" style="direction:rtl; text-align:right;">
+        <option>مشکل فنی</option>
+        <option>سوال درباره تراکنش</option>
+        <option>مشکل امنیتی</option>
+        <option>پیشنهاد</option>
+        <option>سایر</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">توضیحات</label>
+      <textarea class="form-input" id="ticketMessage" rows="4" placeholder="مشکل خود را شرح دهید..." style="direction:rtl; text-align:right; font-family:inherit; resize:vertical;"></textarea>
+    </div>
+    <button class="btn btn-primary" onclick="sendTicket()">ارسال تیکت</button>
+    <button class="btn btn-ghost" onclick="closeModal()">بستن</button>
+  </div>
+</div>
+
+<!-- درباره TAT -->
+<div class="modal" id="modal-about">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="about-hero">
+      <div class="about-coin"></div>
+      <div class="about-name">TAT</div>
+      <div class="about-version">نسخه ۱٫۰٫۰</div>
+      <div class="about-tag">ترکیبی از تعامل</div>
+    </div>
+    <div class="about-info">
+      <div class="about-row">
+        <span>توسعه‌دهنده</span>
+        <span>TAT Team</span>
+      </div>
+      <div class="about-row">
+        <span>تاریخ انتشار</span>
+        <span>۱۴۰۵/۰۱/۰۱</span>
+      </div>
+      <div class="about-row">
+        <span>آخرین بروزرسانی</span>
+        <span>۱۴۰۵/۰۱/۱۵</span>
+      </div>
+      <div class="about-row">
+        <span>لایسنس</span>
+        <span>MIT</span>
+      </div>
+    </div>
+    <div class="about-social">
+      <div class="social-title">ما را دنبال کنید:</div>
+      <div class="social-buttons">
+        <button class="social-btn" onclick="showToast('تلگرام: @TATWallet')">📱</button>
+        <button class="social-btn" onclick="showToast('اینستاگرام: @tat.wallet')">📷</button>
+        <button class="social-btn" onclick="showToast('توییتر: @TATWallet')">🐦</button>
+        <button class="social-btn" onclick="showToast('گیت‌هاب: tat-wallet')">💻</button>
+      </div>
+    </div>
+    <div class="about-copyright">© ۲۰۲۵ TAT Wallet. تمامی حقوق محفوظ است.</div>
+    <button class="btn btn-ghost" onclick="closeModal()">بستن</button>
+  </div>
+</div>
+
+<!-- دستگاه‌ها -->
+<div class="modal" id="modal-devices">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📱 دستگاه‌های متصل</div>
+    <div class="devices-list">
+      <div class="device-item current">
+        <div class="device-icon">📱</div>
+        <div class="device-info">
+          <div class="device-name">این دستگاه</div>
+          <div class="device-meta">Samsung Galaxy • تهران، ایران</div>
+          <div class="device-time">آخرین فعالیت: همین الان</div>
+        </div>
+        <div class="device-badge current-badge">فعلی</div>
+      </div>
+      <div class="device-item">
+        <div class="device-icon">💻</div>
+        <div class="device-info">
+          <div class="device-name">Chrome - ویندوز</div>
+          <div class="device-meta">Windows 11 • تهران، ایران</div>
+          <div class="device-time">آخرین فعالیت: ۲ ساعت پیش</div>
+        </div>
+        <button class="device-remove" onclick="removeDevice(this)">حذف</button>
+      </div>
+      <div class="device-item">
+        <div class="device-icon">📱</div>
+        <div class="device-info">
+          <div class="device-name">iPhone 13</div>
+          <div class="device-meta">iOS 17 • کرج، ایران</div>
+          <div class="device-time">آخرین فعالیت: ۳ روز پیش</div>
+        </div>
+        <button class="device-remove" onclick="removeDevice(this)">حذف</button>
+      </div>
+    </div>
+    <button class="btn btn-danger" onclick="removeAllDevices()">🚪 خروج از همه دستگاه‌ها</button>
+    <button class="btn btn-ghost" onclick="closeModal()">بستن</button>
+  </div>
+</div>
+
+<!-- اندازه فونت -->
+<div class="modal" id="modal-font-size">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📏 اندازه فونت</div>
+    <div class="font-options">
+      <button class="font-option" onclick="setFontSize('small', this)">
+        <div class="font-preview" style="font-size:12px;">نمونه متن</div>
+        <div class="font-name">کوچیک</div>
+      </button>
+      <button class="font-option active" onclick="setFontSize('medium', this)">
+        <div class="font-preview" style="font-size:16px;">نمونه متن</div>
+        <div class="font-name">متوسط</div>
+      </button>
+      <button class="font-option" onclick="setFontSize('large', this)">
+        <div class="font-preview" style="font-size:20px;">نمونه متن</div>
+        <div class="font-name">بزرگ</div>
+      </button>
+    </div>
+    <button class="btn btn-ghost" onclick="closeModal()">بستن</button>
   </div>
 </div>
 
