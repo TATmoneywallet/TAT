@@ -39,17 +39,27 @@ const state = {
   ],
 };
 
+// ================== SETTINGS STATE ==================
+const settings = {
+  fingerprint: false,
+  twoFA: false,
+  txNotify: true,
+  priceNotify: true,
+  rewardNotify: true,
+  darkMode: true,
+  language: 'fa',
+  fontSize: 'medium',
+  inviteCount: 0,
+  inviteReward: 0,
+};
+
 // ================== SVG COIN ==================
 function getCoinSVG(size = 40, options = {}) {
-  const { vip = false, flipped = false } = options;
-  
+  const { vip = false } = options;
   const edgeColors = vip 
     ? ['#FFE08A', '#F5B942', '#FFE08A', '#D89B2E', '#FFE08A']
     : ['#FFD966', '#F5B942', '#FFD966', '#D89B2E', '#FFD966'];
-  
   const textColor = vip ? '#FFE08A' : '#ffffff';
-  const symbol = vip ? '♛' : '✦';
-  
   const id = 'coin_' + Math.random().toString(36).substr(2, 9);
   
   return `
@@ -79,35 +89,12 @@ function getCoinSVG(size = 40, options = {}) {
       <circle cx="100" cy="100" r="82" fill="url(#body_${id})"/>
       <circle cx="100" cy="100" r="82" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="0.5"/>
       <circle cx="100" cy="100" r="76" fill="none" stroke="rgba(253,203,110,0.5)" stroke-width="0.8"/>
-      <circle cx="100" cy="100" r="72" fill="none" stroke="rgba(253,203,110,0.25)" stroke-width="0.5"/>
       <ellipse cx="75" cy="65" rx="45" ry="35" fill="url(#shine_${id})" opacity="0.8"/>
-      
-      ${vip ? `<text x="100" y="72" font-size="14" fill="${textColor}" text-anchor="middle">${symbol}</text>` : ''}
-      
-      <text x="100" y="${vip ? 112 : 108}" 
-            font-family="Cinzel, serif" 
-            font-size="${size < 60 ? 55 : 38}" 
-            font-weight="900" 
-            fill="${textColor}" 
-            text-anchor="middle"
-            letter-spacing="3">TAT</text>
-      
+      ${vip ? `<text x="100" y="72" font-size="14" fill="${textColor}" text-anchor="middle">♛</text>` : ''}
+      <text x="100" y="${vip ? 112 : 108}" font-family="Cinzel, serif" font-size="${size < 60 ? 55 : 38}" font-weight="900" fill="${textColor}" text-anchor="middle" letter-spacing="3">TAT</text>
       ${size >= 60 ? `
         <line x1="72" y1="${vip ? 126 : 122}" x2="128" y2="${vip ? 126 : 122}" stroke="${vip ? '#FFE08A' : 'rgba(253,203,110,0.9)'}" stroke-width="1.5" stroke-linecap="round"/>
-        <text x="100" y="${vip ? 142 : 138}" 
-              font-family="Cinzel, serif" 
-              font-size="13" 
-              font-weight="700" 
-              fill="${textColor}" 
-              text-anchor="middle"
-              letter-spacing="3">2025</text>
-      ` : ''}
-      
-      ${size >= 80 ? `
-        <text x="55" y="60" font-size="10" fill="rgba(253,203,110,0.9)" text-anchor="middle">✦</text>
-        <text x="145" y="60" font-size="10" fill="rgba(253,203,110,0.9)" text-anchor="middle">✦</text>
-        <text x="55" y="155" font-size="10" fill="rgba(253,203,110,0.9)" text-anchor="middle">✦</text>
-        <text x="145" y="155" font-size="10" fill="rgba(253,203,110,0.9)" text-anchor="middle">✦</text>
+        <text x="100" y="${vip ? 142 : 138}" font-family="Cinzel, serif" font-size="13" font-weight="700" fill="${textColor}" text-anchor="middle" letter-spacing="3">2025</text>
       ` : ''}
     </svg>
   `;
@@ -138,48 +125,38 @@ function getMiniCoinSVG(size = 40) {
 
 // ================== INIT ==================
 document.addEventListener('DOMContentLoaded', () => {
-  // Splash Coin
+  // Coins
   const splashCoin = document.getElementById('splashCoin');
   if (splashCoin) splashCoin.innerHTML = getCoinSVG(120);
   
-  // Auth Coin
   const authCoin = document.getElementById('authCoin');
   if (authCoin) authCoin.innerHTML = getCoinSVG(80);
   
-  // Card Coin
   const cardCoinFront = document.getElementById('cardCoinFront');
   if (cardCoinFront) cardCoinFront.innerHTML = getMiniCoinSVG(40);
   
-  // Balance Coin
   const balanceCoin = document.getElementById('balanceCoin');
   if (balanceCoin) balanceCoin.innerHTML = getMiniCoinSVG(44);
   
-  // PQ Coin TAT
   const pqCoinTAT = document.getElementById('pqCoinTAT');
   if (pqCoinTAT) pqCoinTAT.innerHTML = getMiniCoinSVG(28);
   
-  // Asset Detail Coin (modal)
-  const assetDetailCoin = document.getElementById('assetDetailCoin');
-  if (assetDetailCoin) assetDetailCoin.innerHTML = getCoinSVG(100);
-  
-  // Init lists
+  // Init
   renderRecentTxs();
   renderMarket();
   renderAssets();
   renderApps();
   renderHistory();
   renderNotifications();
-  
-  // Init charts/tabs/filters
   initTabs();
   initFilters();
+  loadSettings();
+  loadPersonalInfo();
   
-  // Splash timeout
+  // Splash
   setTimeout(() => {
     const splash = document.getElementById('splash');
     if (splash) splash.style.display = 'none';
-    
-    // Check login
     const loggedIn = localStorage.getItem('tat_logged_in');
     if (loggedIn) {
       document.getElementById('authPage').classList.remove('active');
@@ -206,20 +183,10 @@ function login() {
 function goTo(pageName) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const page = document.querySelector(`[data-page="${pageName}"]`);
-  if (page) {
-    page.classList.add('active');
-    // Show/hide nav based on page
-    if (pageName === 'auth') {
-      document.getElementById('nav').style.display = 'none';
-    } else {
-      document.getElementById('nav').style.display = 'flex';
-    }
-  }
-
+  if (page) page.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   const navBtn = document.querySelector(`[data-nav="${pageName}"]`);
   if (navBtn) navBtn.classList.add('active');
-
   window.scrollTo(0, 0);
 }
 
@@ -239,27 +206,27 @@ function togglePrivacy() {
 
 // ================== RENDER ==================
 function renderRecentTxs() {
-  const container = document.getElementById('recentTxs');
-  if (!container) return;
-  container.innerHTML = '';
-  state.transactions.slice(0, 3).forEach(tx => container.appendChild(createTxEl(tx)));
+  const c = document.getElementById('recentTxs');
+  if (!c) return;
+  c.innerHTML = '';
+  state.transactions.slice(0, 3).forEach(tx => c.appendChild(createTxEl(tx)));
 }
 
 function renderHistory() {
-  const container = document.getElementById('historyList');
-  if (!container) return;
-  container.innerHTML = '';
-  state.transactions.forEach(tx => container.appendChild(createTxEl(tx)));
+  const c = document.getElementById('historyList');
+  if (!c) return;
+  c.innerHTML = '';
+  state.transactions.forEach(tx => c.appendChild(createTxEl(tx)));
 }
 
 function renderNotifications() {
-  const container = document.getElementById('notificationsList');
-  if (!container) return;
-  container.innerHTML = '';
+  const c = document.getElementById('notificationsList');
+  if (!c) return;
+  c.innerHTML = '';
   state.notifications.forEach(n => {
-    const div = document.createElement('div');
-    div.className = 'tx';
-    div.innerHTML = `
+    const d = document.createElement('div');
+    d.className = 'tx';
+    d.innerHTML = `
       <div class="tx-ico" style="background:${n.color}">${n.icon}</div>
       <div class="tx-body">
         <div class="tx-title">${n.title}</div>
@@ -267,87 +234,77 @@ function renderNotifications() {
       </div>
       <div class="tx-time">${n.time}</div>
     `;
-    container.appendChild(div);
+    c.appendChild(d);
   });
 }
 
 function createTxEl(tx) {
-  const div = document.createElement('div');
-  div.className = 'tx';
-  div.onclick = () => showTxDetail(tx);
+  const d = document.createElement('div');
+  d.className = 'tx';
+  d.onclick = () => showTxDetail(tx);
   const sign = tx.amount > 0 ? '+' : '−';
-  const colorClass = tx.amount > 0 ? 'in' : 'out';
-  const amountText = sign + toFa(Math.abs(tx.amount));
-
-  div.innerHTML = `
+  const cls = tx.amount > 0 ? 'in' : 'out';
+  d.innerHTML = `
     <div class="tx-ico ${tx.type}">${tx.icon}</div>
     <div class="tx-body">
       <div class="tx-title">${tx.title}</div>
       <div class="tx-time">${tx.time}</div>
     </div>
-    <div class="tx-amt ${colorClass}">${amountText}</div>
+    <div class="tx-amt ${cls}">${sign}${toFa(Math.abs(tx.amount))}</div>
   `;
-  return div;
+  return d;
 }
 
 function renderMarket(filter = 'all') {
-  const container = document.getElementById('marketList');
-  if (!container) return;
-  container.innerHTML = '';
-  
+  const c = document.getElementById('marketList');
+  if (!c) return;
+  c.innerHTML = '';
   let items = state.market;
   if (filter === 'crypto') items = items.filter(x => x.type === 'crypto');
   if (filter === 'gold') items = items.filter(x => x.type === 'gold');
   
-  items.forEach(asset => {
-    const div = document.createElement('div');
-    div.className = 'market-item';
-    div.onclick = () => showAssetDetail(asset.symbol);
-    
-    const changeClass = asset.change >= 0 ? 'up' : 'down';
-    const changeSign = asset.change >= 0 ? '↑' : '↓';
-    const priceFormatted = toFa(asset.price.toLocaleString()) + ' ' + asset.unit;
-    
-    const iconHTML = asset.symbol === 'TAT' 
+  items.forEach(a => {
+    const d = document.createElement('div');
+    d.className = 'market-item';
+    d.onclick = () => showAssetDetail(a.symbol);
+    const cls = a.change >= 0 ? 'up' : 'down';
+    const sign = a.change >= 0 ? '↑' : '↓';
+    const price = toFa(a.price.toLocaleString()) + ' ' + a.unit;
+    const iconHTML = a.symbol === 'TAT' 
       ? `<div class="market-coin">${getMiniCoinSVG(44)}</div>`
-      : `<div class="market-icon">${asset.icon}</div>`;
-
-    div.innerHTML = `
+      : `<div class="market-icon">${a.icon}</div>`;
+    d.innerHTML = `
       ${iconHTML}
       <div class="market-body">
-        <div class="market-name">${asset.name}</div>
-        <div class="market-symbol">${asset.symbol}</div>
+        <div class="market-name">${a.name}</div>
+        <div class="market-symbol">${a.symbol}</div>
       </div>
       <div class="market-price">
-        <div class="market-price-val">${priceFormatted}</div>
-        <div class="market-price-change ${changeClass}">${changeSign} ${toFa(asset.change)}٪</div>
+        <div class="market-price-val">${price}</div>
+        <div class="market-price-change ${cls}">${sign} ${toFa(a.change)}٪</div>
       </div>
     `;
-    container.appendChild(div);
+    c.appendChild(d);
   });
 }
 
 function renderAssets() {
-  const container = document.getElementById('assetList');
-  if (!container) return;
-  container.innerHTML = '';
-  
+  const c = document.getElementById('assetList');
+  if (!c) return;
+  c.innerHTML = '';
   const assets = [
     { symbol: 'TAT', name: 'TAT', icon: '🪙', amount: '۱٬۲۵۰', value: '۱۲۵٬۰۰۰', percent: 10, color: '#00B894' },
     { symbol: 'USDT', name: 'تتر', icon: '💵', amount: '۵', value: '۴۵۷٬۵۰۰', percent: 73, color: '#FDCB6E' },
     { symbol: 'GOLD18', name: 'طلای ۱۸ عیار', icon: '🥇', amount: '۰٫۱ گرم', value: '۲۳۴٬۵۰۰', percent: 17, color: '#6C5CE7' },
   ];
-  
   assets.forEach(a => {
-    const div = document.createElement('div');
-    div.className = 'asset-item';
-    div.onclick = () => showAssetDetail(a.symbol);
-    
+    const d = document.createElement('div');
+    d.className = 'asset-item';
+    d.onclick = () => showAssetDetail(a.symbol);
     const iconHTML = a.symbol === 'TAT' 
       ? `<div class="market-coin">${getMiniCoinSVG(40)}</div>`
       : `<div class="asset-icon" style="background:${a.color}22">${a.icon}</div>`;
-    
-    div.innerHTML = `
+    d.innerHTML = `
       <div class="asset-top">
         ${iconHTML}
         <div class="asset-info">
@@ -361,20 +318,19 @@ function renderAssets() {
       </div>
       <div class="asset-bar"><div class="asset-bar-fill" style="width:${a.percent}%; background:${a.color};"></div></div>
     `;
-    container.appendChild(div);
+    c.appendChild(d);
   });
 }
 
 function renderApps() {
-  const container = document.getElementById('appsList');
-  if (!container) return;
-  container.innerHTML = '';
-  
+  const c = document.getElementById('appsList');
+  if (!c) return;
+  c.innerHTML = '';
   state.apps.forEach((app, idx) => {
-    const div = document.createElement('div');
-    div.className = 'app-card';
-    div.onclick = () => showAppDetail(idx);
-    div.innerHTML = `
+    const d = document.createElement('div');
+    d.className = 'app-card';
+    d.onclick = () => showAppDetail(idx);
+    d.innerHTML = `
       <div class="app-icon" style="background:rgba(0,184,148,0.15)">${app.icon}</div>
       <div class="app-body">
         <div class="app-name">${app.name}</div>
@@ -383,22 +339,20 @@ function renderApps() {
       </div>
       <div class="app-balance">${toFa(app.balance)}</div>
     `;
-    container.appendChild(div);
+    c.appendChild(d);
   });
 }
 
 // ================== MODALS ==================
 function openModal(type) {
-  const modal = document.getElementById('modal-' + type);
-  if (modal) modal.classList.add('show');
+  const m = document.getElementById('modal-' + type);
+  if (m) m.classList.add('show');
 }
-
 function closeModal() {
   document.querySelectorAll('.modal').forEach(m => m.classList.remove('show'));
 }
-
-document.querySelectorAll('.modal').forEach(m => {
-  m.addEventListener('click', e => { if (e.target === m) closeModal(); });
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('modal')) closeModal();
 });
 
 // ================== TX DETAIL ==================
@@ -413,102 +367,77 @@ function showTxDetail(tx) {
 
 // ================== ASSET DETAIL ==================
 function showAssetDetail(symbol) {
-  const asset = state.market.find(a => a.symbol === symbol);
-  if (!asset) return;
-  
-  document.getElementById('assetDetailName').textContent = asset.name;
-  document.getElementById('assetDetailPrice').textContent = toFa(asset.price.toLocaleString()) + ' ' + asset.unit;
-  
-  const change = document.getElementById('assetDetailChange');
-  change.textContent = (asset.change >= 0 ? '↑ ' : '↓ ') + toFa(asset.change) + '٪';
-  change.className = 'asset-detail-change ' + (asset.change >= 0 ? 'up' : 'down');
-  
+  const a = state.market.find(x => x.symbol === symbol);
+  if (!a) return;
+  document.getElementById('assetDetailName').textContent = a.name;
+  document.getElementById('assetDetailPrice').textContent = toFa(a.price.toLocaleString()) + ' ' + a.unit;
+  const ch = document.getElementById('assetDetailChange');
+  ch.textContent = (a.change >= 0 ? '↑ ' : '↓ ') + toFa(a.change) + '٪';
+  ch.className = 'asset-detail-change ' + (a.change >= 0 ? 'up' : 'down');
   const coinEl = document.getElementById('assetDetailCoin');
   if (symbol === 'TAT') {
     coinEl.innerHTML = getCoinSVG(100);
   } else {
-    coinEl.innerHTML = `<div style="width:100px;height:100px;border-radius:50%;background:${getAssetColor(symbol)}22;display:flex;align-items:center;justify-content:center;font-size:50px;">${asset.icon}</div>`;
+    const color = symbol === 'USDT' ? '#FDCB6E' : '#6C5CE7';
+    coinEl.innerHTML = `<div style="width:100px;height:100px;border-radius:50%;background:${color}22;display:flex;align-items:center;justify-content:center;font-size:50px;">${a.icon}</div>`;
   }
-  
   openModal('asset');
-}
-
-function getAssetColor(symbol) {
-  if (symbol === 'USDT') return '#FDCB6E';
-  if (symbol === 'GOLD18' || symbol === 'GOLD24') return '#6C5CE7';
-  return '#00B894';
 }
 
 // ================== APP DETAIL ==================
 function showAppDetail(idx) {
-  const app = state.apps[idx];
-  if (!app) return;
-  
-  document.getElementById('appDetailIcon').textContent = app.icon;
-  document.getElementById('appDetailName').textContent = app.name;
-  
+  const a = state.apps[idx];
+  if (!a) return;
+  document.getElementById('appDetailIcon').textContent = a.icon;
+  document.getElementById('appDetailName').textContent = a.name;
   openModal('app');
 }
 
 // ================== SEND ==================
-function setAmount(val) {
-  const input = document.getElementById('sendAmount');
-  if (val === 'max') input.value = state.user.balance;
-  else input.value = val;
+function setAmount(v) {
+  const i = document.getElementById('sendAmount');
+  if (v === 'max') i.value = state.user.balance;
+  else i.value = v;
 }
-
 function confirmSend() {
-  const amount = parseFloat(document.getElementById('sendAmount').value);
-  if (!amount || amount <= 0) { showToast('مقدار معتبر وارد کن ❌'); return; }
-  if (amount > state.user.balance) { showToast('موجودی کافی نیست ❌'); return; }
-  state.user.balance -= amount;
+  const a = parseFloat(document.getElementById('sendAmount').value);
+  if (!a || a <= 0) { showToast('مقدار معتبر وارد کن ❌'); return; }
+  if (a > state.user.balance) { showToast('موجودی کافی نیست ❌'); return; }
+  state.user.balance -= a;
   updateBalance();
   closeModal();
   showToast('ارسال شد ✅');
   document.getElementById('sendAmount').value = '';
 }
 
-// ================== BUY/SELL ==================
+// ================== BUY ==================
 function openBuyModal(type) {
-  const title = document.getElementById('buyModalTitle');
-  title.textContent = type === 'buy' ? '🟢 خرید TAT' : '🔴 فروش TAT';
+  document.getElementById('buyModalTitle').textContent = type === 'buy' ? '🟢 خرید TAT' : '🔴 فروش TAT';
   openModal('buy');
 }
-
-function setBuyAmount(percent) {
-  const input = document.getElementById('buyAmount');
-  const total = 1250000;
-  input.value = Math.floor(total * percent / 100);
+function setBuyAmount(p) {
+  document.getElementById('buyAmount').value = Math.floor(1250000 * p / 100);
 }
-
 function confirmBuy() {
-  const amount = parseFloat(document.getElementById('buyAmount').value);
-  if (!amount || amount <= 0) { showToast('مقدار معتبر وارد کن ❌'); return; }
+  const a = parseFloat(document.getElementById('buyAmount').value);
+  if (!a || a <= 0) { showToast('مقدار معتبر وارد کن ❌'); return; }
   closeModal();
   showToast('معامله انجام شد ✅');
 }
 
 // ================== STAKE ==================
 function openStakeModal(type, rate) {
-  const labels = {
-    'flexible': 'انعطاف‌پذیر',
-    '1m': '۱ ماهه',
-    '3m': '۳ ماهه',
-    '6m': '۶ ماهه'
-  };
-  document.getElementById('stakeTypeLabel').textContent = labels[type] || type;
+  const labels = { flexible: 'انعطاف‌پذیر', '1m': '۱ ماهه', '3m': '۳ ماهه', '6m': '۶ ماهه' };
+  document.getElementById('stakeTypeLabel').textContent = labels[type];
   document.getElementById('stakeRateLabel').textContent = toFa(rate) + '٪ سالانه';
   openModal('stake');
 }
-
-function setStakeAmount(percent) {
-  const input = document.getElementById('stakeAmount');
-  input.value = Math.floor(state.user.balance * percent / 100);
+function setStakeAmount(p) {
+  document.getElementById('stakeAmount').value = Math.floor(state.user.balance * p / 100);
 }
-
 function confirmStake() {
-  const amount = parseFloat(document.getElementById('stakeAmount').value);
-  if (!amount || amount <= 0) { showToast('مقدار معتبر وارد کن ❌'); return; }
+  const a = parseFloat(document.getElementById('stakeAmount').value);
+  if (!a || a <= 0) { showToast('مقدار معتبر وارد کن ❌'); return; }
   closeModal();
   showToast('سپرده‌گذاری انجام شد ✅');
 }
@@ -518,67 +447,54 @@ function updateBalance() {
   document.getElementById('balanceValue').textContent = toFa(state.user.balance.toFixed(2)).replace('.', '٫');
 }
 
-// ================== TOGGLE ==================
-function toggleSwitch(el) {
-  el.classList.toggle('active');
-}
-
 // ================== TABS & FILTERS ==================
 function initTabs() {
-  document.querySelectorAll('.chart-tab').forEach(tab => {
-    tab.addEventListener('click', function() {
-      this.parentElement.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.chart-tab').forEach(t => {
+    t.addEventListener('click', function() {
+      this.parentElement.querySelectorAll('.chart-tab').forEach(x => x.classList.remove('active'));
       this.classList.add('active');
     });
   });
 }
-
 function initFilters() {
-  document.querySelectorAll('.filter-chip').forEach(chip => {
-    chip.addEventListener('click', function() {
-      this.parentElement.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.filter-chip').forEach(c => {
+    c.addEventListener('click', function() {
+      this.parentElement.querySelectorAll('.filter-chip').forEach(x => x.classList.remove('active'));
       this.classList.add('active');
-      
-      const filter = this.dataset.filter;
-      const page = this.closest('.page').dataset.page;
-      
-      if (page === 'market') renderMarket(filter);
+      const f = this.dataset.filter;
+      const page = this.closest('.page')?.dataset.page;
+      if (page === 'market') renderMarket(f);
     });
   });
   
-  // Market search
-  const marketSearch = document.getElementById('marketSearch');
-  if (marketSearch) {
-    marketSearch.addEventListener('input', (e) => {
+  const ms = document.getElementById('marketSearch');
+  if (ms) {
+    ms.addEventListener('input', (e) => {
       const q = e.target.value.toLowerCase();
-      const container = document.getElementById('marketList');
-      if (!container) return;
-      container.innerHTML = '';
-      
-      state.market.filter(a => 
-        a.name.toLowerCase().includes(q) || a.symbol.toLowerCase().includes(q)
-      ).forEach(asset => {
-        const div = document.createElement('div');
-        div.className = 'market-item';
-        div.onclick = () => showAssetDetail(asset.symbol);
-        const changeClass = asset.change >= 0 ? 'up' : 'down';
-        const changeSign = asset.change >= 0 ? '↑' : '↓';
-        const priceFormatted = toFa(asset.price.toLocaleString()) + ' ' + asset.unit;
-        const iconHTML = asset.symbol === 'TAT' 
+      const c = document.getElementById('marketList');
+      c.innerHTML = '';
+      state.market.filter(a => a.name.toLowerCase().includes(q) || a.symbol.toLowerCase().includes(q)).forEach(a => {
+        const d = document.createElement('div');
+        d.className = 'market-item';
+        d.onclick = () => showAssetDetail(a.symbol);
+        const cls = a.change >= 0 ? 'up' : 'down';
+        const sign = a.change >= 0 ? '↑' : '↓';
+        const price = toFa(a.price.toLocaleString()) + ' ' + a.unit;
+        const iconHTML = a.symbol === 'TAT' 
           ? `<div class="market-coin">${getMiniCoinSVG(44)}</div>`
-          : `<div class="market-icon">${asset.icon}</div>`;
-        div.innerHTML = `
+          : `<div class="market-icon">${a.icon}</div>`;
+        d.innerHTML = `
           ${iconHTML}
           <div class="market-body">
-            <div class="market-name">${asset.name}</div>
-            <div class="market-symbol">${asset.symbol}</div>
+            <div class="market-name">${a.name}</div>
+            <div class="market-symbol">${a.symbol}</div>
           </div>
           <div class="market-price">
-            <div class="market-price-val">${priceFormatted}</div>
-            <div class="market-price-change ${changeClass}">${changeSign} ${toFa(asset.change)}٪</div>
+            <div class="market-price-val">${price}</div>
+            <div class="market-price-change ${cls}">${sign} ${toFa(a.change)}٪</div>
           </div>
         `;
-        container.appendChild(div);
+        c.appendChild(d);
       });
     });
   }
@@ -586,18 +502,16 @@ function initFilters() {
 
 // ================== UTILS ==================
 function toFa(num) {
-  const persian = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
-  return String(num).replace(/\d/g, d => persian[d]);
+  const p = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+  return String(num).replace(/\d/g, d => p[d]);
 }
-
 function showToast(msg) {
-  const toast = document.getElementById('toast');
-  toast.textContent = msg;
-  toast.classList.add('show');
-  clearTimeout(toast._timer);
-  toast._timer = setTimeout(() => toast.classList.remove('show'), 2200);
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2200);
 }
-
 function copyText(text) {
   if (navigator.clipboard) {
     navigator.clipboard.writeText(text).then(() => showToast('کپی شد 📋'));
@@ -605,7 +519,6 @@ function copyText(text) {
     showToast('کپی شد 📋');
   }
 }
-
 function logout() {
   if (confirm('مطمئنی می‌خوای خارج بشی؟')) {
     localStorage.removeItem('tat_logged_in');
@@ -613,7 +526,304 @@ function logout() {
   }
 }
 
-// Register
-if ('serviceWorker' in navigator) {
-  // PWA optional
+// ═══════════════════════════════════════════
+// SETTINGS LOGIC
+// ═══════════════════════════════════════════
+
+function loadSettings() {
+  const s = localStorage.getItem('tat_settings');
+  if (s) Object.assign(settings, JSON.parse(s));
+  applySettingsToUI();
+}
+
+function saveSettings() {
+  localStorage.setItem('tat_settings', JSON.stringify(settings));
+}
+
+function applySettingsToUI() {
+  const fp = document.getElementById('toggleFingerprint');
+  const tfa = document.getElementById('toggle2FA');
+  const txn = document.getElementById('toggleTxNotify');
+  const pn = document.getElementById('togglePriceNotify');
+  const rn = document.getElementById('toggleRewardNotify');
+  const th = document.getElementById('toggleTheme');
+  
+  if (fp) fp.classList.toggle('active', settings.fingerprint);
+  if (tfa) tfa.classList.toggle('active', settings.twoFA);
+  if (txn) txn.classList.toggle('active', settings.txNotify);
+  if (pn) pn.classList.toggle('active', settings.priceNotify);
+  if (rn) rn.classList.toggle('active', settings.rewardNotify);
+  if (th) th.classList.toggle('active', settings.darkMode);
+  
+  const lb = document.getElementById('langBadge');
+  if (lb) {
+    const langs = { fa: 'فارسی', en: 'English', ar: 'العربية' };
+    lb.textContent = langs[settings.language] + ' ›';
+  }
+  
+  const fb = document.getElementById('fontBadge');
+  if (fb) {
+    const fonts = { small: 'کوچیک', medium: 'متوسط', large: 'بزرگ' };
+    fb.textContent = fonts[settings.fontSize] + ' ›';
+  }
+  
+  document.documentElement.style.fontSize = 
+    settings.fontSize === 'small' ? '14px' :
+    settings.fontSize === 'large' ? '18px' : '16px';
+  
+  const ic = document.getElementById('inviteCount');
+  const ir = document.getElementById('inviteReward');
+  if (ic) ic.textContent = toFa(settings.inviteCount);
+  if (ir) ir.textContent = toFa(settings.inviteReward);
+}
+
+function loadPersonalInfo() {
+  const pi = localStorage.getItem('tat_personal_info');
+  if (pi) {
+    const info = JSON.parse(pi);
+    if (info.name) {
+      state.user.name = info.name;
+      const un = document.getElementById('userName');
+      if (un) un.textContent = info.name;
+      const pn = document.getElementById('profileName');
+      if (pn) pn.textContent = info.name;
+      const ch = document.getElementById('cardHolder');
+      if (ch) ch.textContent = info.name.toUpperCase();
+      const chb = document.getElementById('cardHolderBack');
+      if (chb) chb.textContent = info.name.toUpperCase();
+    }
+    const ep = document.getElementById('editPhone');
+    if (ep && info.phone) ep.value = info.phone;
+    const ee = document.getElementById('editEmail');
+    if (ee && info.email) ee.value = info.email;
+    const en = document.getElementById('editName');
+    if (en && info.name) en.value = info.name;
+  }
+}
+
+function openSettingsModal(type) {
+  const m = document.getElementById('modal-' + type);
+  if (m) m.classList.add('show');
+  if (navigator.vibrate) navigator.vibrate(10);
+}
+
+// Change Password
+function savePassword() {
+  const o = document.getElementById('oldPassword').value;
+  const n = document.getElementById('newPassword').value;
+  const c = document.getElementById('confirmPassword').value;
+  if (!o || !n || !c) { showToast('همه فیلدها رو پر کن ❌'); return; }
+  if (n.length < 6) { showToast('رمز جدید حداقل ۶ کاراکتر باشه ❌'); return; }
+  if (n !== c) { showToast('رمز جدید و تأییدش یکسان نیستن ❌'); return; }
+  localStorage.setItem('tat_password', btoa(n));
+  closeModal();
+  showToast('رمز عبور با موفقیت تغییر کرد ✅');
+  document.getElementById('oldPassword').value = '';
+  document.getElementById('newPassword').value = '';
+  document.getElementById('confirmPassword').value = '';
+  document.getElementById('passwordStrength').innerHTML = '';
+}
+
+document.addEventListener('input', (e) => {
+  if (e.target.id === 'newPassword') {
+    const val = e.target.value;
+    const s = document.getElementById('passwordStrength');
+    if (!s) return;
+    let score = 0;
+    if (val.length >= 6) score++;
+    if (val.length >= 10) score++;
+    if (/[A-Z]/.test(val)) score++;
+    if (/[0-9]/.test(val)) score++;
+    if (/[^A-Za-z0-9]/.test(val)) score++;
+    const levels = [
+      { t: 'خیلی ضعیف', c: '#ff4757', w: '20%' },
+      { t: 'ضعیف', c: '#ff6b6b', w: '40%' },
+      { t: 'متوسط', c: '#FDCB6E', w: '60%' },
+      { t: 'خوب', c: '#00d97e', w: '80%' },
+      { t: 'عالی', c: '#00B894', w: '100%' },
+    ];
+    const l = levels[Math.min(score, 4)];
+    s.innerHTML = `<div style="height:4px; background:rgba(255,255,255,0.1); border-radius:4px; overflow:hidden; margin-top:8px;"><div style="height:100%; width:${l.w}; background:${l.c}; transition:0.3s;"></div></div><div style="font-size:11px; color:${l.c}; margin-top:4px;">${l.t}</div>`;
+  }
+});
+
+// 2FA
+function toggle2FA(el) {
+  if (!settings.twoFA) openSettingsModal('2fa');
+  else {
+    if (confirm('2FA رو غیرفعال کنم؟')) {
+      settings.twoFA = false;
+      el.classList.remove('active');
+      saveSettings();
+      showToast('2FA غیرفعال شد 🔓');
+    }
+  }
+}
+
+function activate2FA() {
+  const c = document.getElementById('twoFACode').value;
+  if (c.length !== 6) { showToast('کد ۶ رقمی رو کامل وارد کن ❌'); return; }
+  settings.twoFA = true;
+  saveSettings();
+  applySettingsToUI();
+  closeModal();
+  showToast('2FA فعال شد ✅');
+  document.getElementById('twoFACode').value = '';
+}
+
+// Fingerprint
+function toggleFingerprint(el) {
+  settings.fingerprint = !settings.fingerprint;
+  el.classList.toggle('active', settings.fingerprint);
+  saveSettings();
+  showToast(settings.fingerprint ? 'اثر انگشت فعال شد 👆' : 'اثر انگشت غیرفعال شد');
+}
+
+// Personal Info
+function savePersonalInfo() {
+  const name = document.getElementById('editName').value.trim();
+  const phone = document.getElementById('editPhone').value.trim();
+  const email = document.getElementById('editEmail').value.trim();
+  if (!name) { showToast('نام نمی‌تونه خالی باشه ❌'); return; }
+  localStorage.setItem('tat_personal_info', JSON.stringify({ name, phone, email }));
+  state.user.name = name;
+  document.getElementById('userName').textContent = name;
+  document.getElementById('profileName').textContent = name;
+  const ch = document.getElementById('cardHolder');
+  if (ch) ch.textContent = name.toUpperCase();
+  const chb = document.getElementById('cardHolderBack');
+  if (chb) chb.textContent = name.toUpperCase();
+  closeModal();
+  showToast('اطلاعات ذخیره شد ✅');
+}
+
+// Invite
+function copyInviteLink() {
+  copyText(document.getElementById('inviteLink').textContent);
+}
+function shareTelegram() {
+  const l = document.getElementById('inviteLink').textContent;
+  window.open('https://t.me/share/url?url=' + encodeURIComponent(l) + '&text=' + encodeURIComponent('با TAT Wallet آشنا شو! 🪙'), '_blank');
+}
+function shareWhatsApp() {
+  const l = document.getElementById('inviteLink').textContent;
+  window.open('https://wa.me/?text=' + encodeURIComponent('با TAT Wallet آشنا شو! 🪙 ' + l), '_blank');
+}
+function shareMore() {
+  const l = document.getElementById('inviteLink').textContent;
+  if (navigator.share) navigator.share({ title: 'TAT Wallet', text: 'با TAT Wallet آشنا شو! 🪙', url: l });
+  else copyText(l);
+}
+
+// Reports
+function switchReport(p, btn) {
+  document.querySelectorAll('.report-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  const data = {
+    week: { in: '+۵۰۰', out: '−۲۰۰', stake: '+۱۲', total: '+۲۸۸' },
+    month: { in: '+۲٬۵۰۰', out: '−۸۵۰', stake: '+۱۲۵', total: '+۱٬۷۷۵' },
+    year: { in: '+۳۰٬۰۰۰', out: '−۱۰٬۲۰۰', stake: '+۱٬۵۰۰', total: '+۲۰٬۸۰۰' },
+  };
+  const d = data[p];
+  const rows = document.querySelectorAll('#modal-reports .report-row');
+  if (rows.length >= 4) {
+    rows[0].querySelector('span:last-child').textContent = d.in + ' TAT';
+    rows[1].querySelector('span:last-child').textContent = d.out + ' TAT';
+    rows[2].querySelector('span:last-child').textContent = d.stake + ' TAT';
+    rows[3].querySelector('span:last-child').textContent = d.total + ' TAT';
+  }
+}
+
+function downloadReport() {
+  const csv = `تاریخ,نوع,مقدار,توضیحات\n۱۴۰۵/۰۱/۰۱,واریز,+۵۰۰,افزایش موجودی\n۱۴۰۵/۰۱/۰۲,جایزه,+۵۰,Space Run\n۱۴۰۵/۰۱/۰۳,برداشت,−۱۰۰,ارسال به سارا\n۱۴۰۵/۰۱/۰۵,سود,+۱۲,سود سپرده روزانه`;
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'TAT-Report.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('گزارش دانلود شد 📥');
+}
+
+// Language
+function setLanguage(lang, btn) {
+  document.querySelectorAll('.lang-option').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  settings.language = lang;
+  saveSettings();
+  applySettingsToUI();
+  const names = { fa: 'فارسی', en: 'English', ar: 'العربية' };
+  closeModal();
+  showToast('زبان به ' + names[lang] + ' تغییر کرد 🌐');
+}
+
+// FAQ
+function toggleFaq(el) {
+  el.classList.toggle('open');
+  const i = el.querySelector('.faq-icon');
+  i.textContent = el.classList.contains('open') ? '−' : '+';
+}
+
+// Support
+function openChat() { showToast('چت زنده به‌زودی باز می‌شه 💬'); }
+function openTelegram() { window.open('https://t.me/TATWalletSupport', '_blank'); }
+function openEmail() { window.location.href = 'mailto:support@tat.wallet'; }
+
+function sendTicket() {
+  const s = document.getElementById('ticketSubject').value;
+  const m = document.getElementById('ticketMessage').value.trim();
+  if (!m) { showToast('توضیحات رو بنویس ❌'); return; }
+  const tickets = JSON.parse(localStorage.getItem('tat_tickets') || '[]');
+  tickets.push({ id: 'TKT-' + Date.now(), subject: s, message: m, date: new Date().toISOString(), status: 'open' });
+  localStorage.setItem('tat_tickets', JSON.stringify(tickets));
+  document.getElementById('ticketMessage').value = '';
+  closeModal();
+  showToast('تیکت با موفقیت ارسال شد ✅');
+}
+
+// Devices
+function removeDevice(btn) {
+  if (confirm('این دستگاه رو حذف کنم؟')) {
+    btn.closest('.device-item').remove();
+    showToast('دستگاه حذف شد ✅');
+  }
+}
+function removeAllDevices() {
+  if (confirm('از همه دستگاه‌ها خارج بشم؟')) {
+    document.querySelectorAll('.device-item:not(.current)').forEach(d => d.remove());
+    showToast('از همه دستگاه‌ها خارج شدی ✅');
+  }
+}
+
+// Font Size
+function setFontSize(s, btn) {
+  document.querySelectorAll('.font-option').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  settings.fontSize = s;
+  saveSettings();
+  applySettingsToUI();
+  closeModal();
+  showToast('اندازه فونت تغییر کرد 📏');
+}
+
+// Theme
+function toggleThemeSetting(el) {
+  settings.darkMode = !settings.darkMode;
+  el.classList.toggle('active', settings.darkMode);
+  saveSettings();
+  if (!settings.darkMode) {
+    document.body.classList.add('light-mode');
+    showToast('حالت روشن ☀️');
+  } else {
+    document.body.classList.remove('light-mode');
+    showToast('حالت تیره 🌙');
+  }
+}
+
+// Simple Toggles
+function toggleSimple(el, key) {
+  settings[key] = !settings[key];
+  el.classList.toggle('active', settings[key]);
+  saveSettings();
 }
