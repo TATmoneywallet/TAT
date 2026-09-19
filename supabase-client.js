@@ -3,8 +3,8 @@
    ═══════════════════════════════════════════ */
 
 // ⚠️ این دو مقدار رو از Supabase Dashboard بگیر
-const SUPABASE_URL = 'https://xxxxxxxxxxxxx.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
+const SUPABASE_URL = 'https://lvujgergogwodfskkqrh.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2dWpnZXJnb2d3b2Rmc2trcXJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk3NDYwNTEsImV4cCI6MjEwNTMyMjA1MX0.W1OPbhAaBbtJrfgir3Nez4iP8tBWShXv7wFYkYGNKrY';
 
 // ساخت کلاینت
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
