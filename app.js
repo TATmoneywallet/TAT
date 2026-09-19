@@ -230,6 +230,8 @@ async function performRegister(inviteCode, name, phone, email, nationalId) {
       name: name || 'کاربر جدید',
       userId: result.user.userId,
       cardNumber: result.user.cardNumber,
+      cvv: result.user.cvv,
+      cardExpiry: result.user.cardExpiry,
       balance: result.user.balance,
       avatar: '👤',
       profileLevel: name ? 'semi' : 'basic',
@@ -612,7 +614,7 @@ async function confirmSend() {
   
   try {
     showToast('در حال ارسال... ⏳');
-    const result = await apiTransfer(recipient, amount, note);
+    const result = await apiTransfer(state.user.id, recipient, amount, note);
     
     state.user.balance = result.newBalance;
     saveSession(state.user);
@@ -856,7 +858,6 @@ async function savePersonalInfo() {
       state.user.avatar
     );
     
-    // آپدیت state و session
     state.user.name = result.user.name;
     state.user.phone = result.user.phone;
     state.user.email = result.user.email;
@@ -884,12 +885,21 @@ function copyMyActiveCode() {
 }
 
 async function createNewInviteCode() {
+  if (!state.user.id) {
+    showToast('ابتدا وارد حساب شو ❌');
+    return;
+  }
+  
   try {
     showToast('در حال ساخت کد... ⏳');
-    const code = await apiCreateInviteCode('normal');
-    document.getElementById('myActiveCode').textContent = code;
+    
+    const result = await apiCreateInviteCode(state.user.id, 'normal');
+    
+    document.getElementById('myActiveCode').textContent = result.code;
     showToast('کد ساخته شد ✅');
+    
   } catch (e) {
+    console.error('createNewInviteCode error:', e);
     showToast(e.message || 'خطا در ساخت کد');
   }
 }
@@ -976,7 +986,7 @@ function toggleThemeSetting(el) {
     showToast('حالت روشن ☀️');
   } else {
     document.body.classList.remove('light-mode');
-    showToast('حالت تیره 🌙');
+    showToast('حالت تاریک 🌙');
   }
 }
 
