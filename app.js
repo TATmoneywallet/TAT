@@ -32,6 +32,26 @@ const state = {
 
 // ================== SETTINGS ==================
 const settings = {
+   // ═══════════════════════════════════════
+// SESSION (Local Fallback)
+// ═══════════════════════════════════════
+
+function getSession() {
+  try {
+    const data = localStorage.getItem('tat_user');
+    return data ? JSON.parse(data) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function saveSession(user) {
+  localStorage.setItem('tat_user', JSON.stringify(user));
+}
+
+function clearSession() {
+  localStorage.removeItem('tat_user');
+}
   fingerprint: false,
   twoFA: false,
   txNotify: true,
