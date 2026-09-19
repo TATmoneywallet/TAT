@@ -1,25 +1,24 @@
 /* ═══════════════════════════════════════════
-   TAT Wallet — Application Logic
+   TAT Wallet — Application Logic (v1.1.0)
    ═══════════════════════════════════════════ */
 
 // ================== STATE ==================
 const state = {
   user: {
-    name: 'علی احمدی',
-    userId: '@ali_7x3k',
+    id: null,
+    name: null,
+    userId: null,
     avatar: '👤',
-    cardNumber: '۹۹۰۰ ۶۰۳۷ ۱۲۳۴ ۵۶۷۸',
-    balance: 1250,
+    cardNumber: null,
+    cvv: null,
+    cardExpiry: null,
+    balance: 0,
     rate: 100,
+    profileLevel: 'basic',
+    tier: 'bronze',
   },
   privacy: false,
-  transactions: [
-    { id: 1, type: 'reward', title: 'جایزه Space Run', time: '۱۰ دقیقه پیش', amount: 50, icon: '🎁' },
-    { id: 2, type: 'out', title: 'ارسال به سارا', time: '۲ ساعت پیش', amount: -100, icon: '📤' },
-    { id: 3, type: 'in', title: 'افزایش موجودی', time: 'دیروز', amount: 500, icon: '💳' },
-    { id: 4, type: 'stake', title: 'سود سپرده روزانه', time: 'دیروز', amount: 12, icon: '📈' },
-    { id: 5, type: 'game', title: 'خرید در Puzzle', time: '۳ روز پیش', amount: -75, icon: '🎮' },
-  ],
+  transactions: [],
   market: [
     { symbol: 'TAT', name: 'TAT', icon: '🪙', price: 100, change: 0.97, unit: 'تومان', type: 'tat' },
     { symbol: 'USDT', name: 'تتر', icon: '💵', price: 91500, change: 0.5, unit: 'تومان', type: 'crypto' },
@@ -27,19 +26,11 @@ const state = {
     { symbol: 'GOLD24', name: 'طلای ۲۴ عیار', icon: '🥇', price: 3127000, change: 1.3, unit: 'تومان', type: 'gold' },
     { symbol: 'OUNCE', name: 'اونس جهانی', icon: '💎', price: 2650, change: 0.8, unit: 'دلار', type: 'gold' },
   ],
-  apps: [
-    { icon: '🚀', name: 'Space Run', balance: 250, in: 500, out: 250, last: '۱۰ دقیقه پیش' },
-    { icon: '🧩', name: 'Puzzle Master', balance: 100, in: 300, out: 200, last: '۲ ساعت پیش' },
-    { icon: '📋', name: 'Daily Task', balance: 500, in: 1000, out: 500, last: 'دیروز' },
-  ],
-  notifications: [
-    { icon: '🎁', title: 'جایزه Space Run', desc: '۵۰ TAT دریافت کردی', time: '۱۰ دقیقه پیش', color: 'rgba(0,217,126,0.15)' },
-    { icon: '📈', title: 'قیمت تتر افزایش یافت', desc: '+۰٫۵٪ در ۲۴ ساعت گذشته', time: '۱ ساعت پیش', color: 'rgba(253,203,110,0.15)' },
-    { icon: '💰', title: 'سود سپرده واریز شد', desc: '+۱۲ TAT به موجودی اضافه شد', time: 'دیروز', color: 'rgba(108,92,231,0.15)' },
-  ],
+  apps: [],
+  notifications: [],
 };
 
-// ================== SETTINGS STATE ==================
+// ================== SETTINGS ==================
 const settings = {
   fingerprint: false,
   twoFA: false,
@@ -49,8 +40,6 @@ const settings = {
   darkMode: true,
   language: 'fa',
   fontSize: 'medium',
-  inviteCount: 0,
-  inviteReward: 0,
 };
 
 // ================== SVG COIN ==================
@@ -142,44 +131,264 @@ document.addEventListener('DOMContentLoaded', () => {
   if (pqCoinTAT) pqCoinTAT.innerHTML = getMiniCoinSVG(28);
   
   // Init
-  renderRecentTxs();
   renderMarket();
-  renderAssets();
-  renderApps();
-  renderHistory();
-  renderNotifications();
   initTabs();
   initFilters();
   loadSettings();
-  loadPersonalInfo();
   
   // Splash
   setTimeout(() => {
     const splash = document.getElementById('splash');
     if (splash) splash.style.display = 'none';
-    const loggedIn = localStorage.getItem('tat_logged_in');
-    if (loggedIn) {
+    
+    const session = getSession();
+    if (session && session.id) {
+      Object.assign(state.user, session);
       document.getElementById('authPage').classList.remove('active');
       document.getElementById('mainApp').style.display = 'block';
       document.getElementById('nav').style.display = 'flex';
+      updateUserUI();
+      loadUserData();
     } else {
       document.getElementById('authPage').classList.add('active');
     }
   }, 2600);
 });
 
-// ================== LOGIN ==================
-function login() {
-  const phone = document.getElementById('phoneInput').value.trim();
-  if (phone.length < 10) { showToast('شماره موبایل معتبر وارد کن ❌'); return; }
-  localStorage.setItem('tat_logged_in', 'true');
+// ═══════════════════════════════════════
+// AUTH LOGIC
+// ═══════════════════════════════════════
+
+let pendingInviteCode = null;
+
+function showInfo(key) {
+  const el = document.getElementById('info-' + key);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+async function verifyInviteCode() {
+  const code = document.getElementById('inviteCodeInput').value.trim().toUpperCase();
+  
+  if (!code) { showToast('کد دعوت رو وارد کن ❌'); return; }
+  if (!code.startsWith('TAT-')) { showToast('کد دعوت باید با TAT- شروع بشه ❌'); return; }
+  
+  pendingInviteCode = code;
+  document.getElementById('authStep1').style.display = 'none';
+  document.getElementById('authStep2').style.display = 'block';
+  showToast('کد دعوت ثبت شد ✨');
+}
+
+async function completeRegistration() {
+  const name = document.getElementById('regName').value.trim() || null;
+  const phone = document.getElementById('regPhone').value.trim() || null;
+  const email = document.getElementById('regEmail').value.trim() || null;
+  const nationalId = document.getElementById('regNational').value.trim() || null;
+  await performRegister(pendingInviteCode, name, phone, email, nationalId);
+}
+
+async function skipRegistrationInfo() {
+  await performRegister(pendingInviteCode, null, null, null, null);
+}
+
+async function performRegister(inviteCode, name, phone, email, nationalId) {
+  try {
+    showToast('در حال ساخت حساب... ⏳');
+    const result = await apiRegister(inviteCode, name, phone, email, nationalId);
+    
+    const user = {
+      id: result.user.id,
+      name: name || 'کاربر جدید',
+      userId: result.user.userId,
+      cardNumber: result.user.cardNumber,
+      balance: result.user.balance,
+      avatar: '👤',
+      profileLevel: name ? 'semi' : 'basic',
+      phone: phone,
+      email: email,
+    };
+    saveSession(user);
+    
+    document.getElementById('authStep2').style.display = 'none';
+    document.getElementById('authStep3').style.display = 'block';
+    document.getElementById('newCardNumber').textContent = result.user.cardNumber;
+    document.getElementById('newUserId').textContent = result.user.userId;
+    document.getElementById('newReward').textContent = toFa(result.user.reward);
+    
+    Object.assign(state.user, user);
+    if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
+  } catch (error) {
+    console.error(error);
+    showToast(error.message || 'خطا در ثبت‌نام ❌');
+  }
+}
+
+function enterApp() {
   document.getElementById('authPage').classList.remove('active');
   document.getElementById('mainApp').style.display = 'block';
   document.getElementById('nav').style.display = 'flex';
-  showToast('خوش اومدی ' + state.user.name + ' 🎉');
+  updateUserUI();
+  loadUserData();
+  showToast('خوش اومدی ' + (state.user.name || 'دوست عزیز') + ' 🎉');
 }
 
-// ================== NAVIGATION ==================
+function showLogin() {
+  document.getElementById('authStep1').style.display = 'none';
+  document.getElementById('authLogin').style.display = 'block';
+}
+
+function showRegister() {
+  document.getElementById('authLogin').style.display = 'none';
+  document.getElementById('authStep1').style.display = 'block';
+}
+
+async function doLogin() {
+  const input = document.getElementById('loginInput').value.trim();
+  if (!input) { showToast('شماره موبایل یا آیدی رو وارد کن ❌'); return; }
+  
+  try {
+    showToast('در حال ورود... ⏳');
+    let phone = null, userId = null;
+    if (input.startsWith('@')) userId = input;
+    else phone = input;
+    
+    const result = await apiLogin(phone, null, userId);
+    saveSession(result.user);
+    Object.assign(state.user, result.user);
+    
+    document.getElementById('authPage').classList.remove('active');
+    document.getElementById('mainApp').style.display = 'block';
+    document.getElementById('nav').style.display = 'flex';
+    
+    updateUserUI();
+    loadUserData();
+    showToast('خوش اومدی ' + (state.user.name || 'دوست عزیز') + ' 🎉');
+  } catch (error) {
+    console.error(error);
+    showToast(error.message || 'خطا در ورود ❌');
+  }
+}
+
+// ═══════════════════════════════════════
+// USER UI
+// ═══════════════════════════════════════
+
+function updateUserUI() {
+  const un = document.getElementById('userName');
+  if (un) un.textContent = state.user.name || 'کاربر جدید';
+  
+  const pn = document.getElementById('profileName');
+  if (pn) pn.textContent = state.user.name || 'کاربر جدید';
+  const pi = document.getElementById('profileId');
+  if (pi) pi.textContent = state.user.userId || '@user_xxx';
+  const pa = document.getElementById('profileAvatar');
+  if (pa) pa.textContent = state.user.avatar || '👤';
+  
+  const cn = document.getElementById('cardNumber');
+  if (cn) cn.textContent = state.user.cardNumber || '۹۹۰۰ ۶۰۳۷ XXXX XXXX';
+  const chb = document.getElementById('cardHolderBack');
+  if (chb) chb.textContent = (state.user.name || 'USER').toUpperCase();
+  const cv = document.getElementById('cardCVV');
+  if (cv) cv.textContent = state.user.cvv || '۱۲۳';
+  
+  const bv = document.getElementById('balanceValue');
+  if (bv) bv.textContent = toFa((state.user.balance || 0).toFixed(2)).replace('.', '٫');
+  const bf = document.getElementById('balanceFiat');
+  if (bf) bf.textContent = toFa(Math.floor((state.user.balance || 0) * 100)).replace(/\B(?=(\d{3})+(?!\d))/g, '٬') + ' تومان';
+  
+  const pq = document.getElementById('pqValTAT');
+  if (pq) pq.textContent = toFa(Math.floor(state.user.balance || 0));
+  
+  const ha = document.getElementById('headerAvatar');
+  if (ha) ha.textContent = state.user.avatar || '👤';
+  
+  const rcv = document.getElementById('receiveUserId');
+  if (rcv) rcv.textContent = state.user.userId || '@user_xxx';
+  const rcc = document.getElementById('receiveCardNumber');
+  if (rcc) rcc.textContent = state.user.cardNumber || '۹۹۰۰ ۶۰۳۷ XXXX XXXX';
+  
+  const sfc = document.getElementById('sendFromCard');
+  if (sfc) sfc.textContent = state.user.cardNumber || '۹۹۰۰ ۶۰۳۷ XXXX XXXX';
+  const sfb = document.getElementById('sendFromBalance');
+  if (sfb) sfb.textContent = 'موجودی: ' + toFa(Math.floor(state.user.balance || 0)) + ' TAT';
+  
+  const sfbal = document.getElementById('stakeFromBalance');
+  if (sfbal) sfbal.textContent = toFa(Math.floor(state.user.balance || 0)) + ' TAT';
+  
+  const eid = document.getElementById('editUserId');
+  if (eid) eid.value = state.user.userId || '@user_xxx';
+  const en = document.getElementById('editName');
+  if (en && state.user.name) en.value = state.user.name;
+  const ep = document.getElementById('editPhone');
+  if (ep && state.user.phone) ep.value = state.user.phone;
+  const ee = document.getElementById('editEmail');
+  if (ee && state.user.email) ee.value = state.user.email;
+  
+  const il = document.getElementById('inviteLink');
+  if (il) il.textContent = 'https://tat.wallet/invite/' + (state.user.userId || 'xxx').replace('@', '');
+}
+
+async function loadUserData() {
+  if (!state.user.id) return;
+  try {
+    // تراکنش‌ها
+    const txs = await apiGetTransactions(state.user.id);
+    state.transactions = txs.map(tx => ({
+      id: tx.id,
+      type: tx.type === 'transfer' ? (tx.from_user === state.user.id ? 'out' : 'in') : tx.type,
+      title: tx.description || 'تراکنش',
+      time: formatTime(tx.created_at),
+      amount: tx.from_user === state.user.id ? -tx.amount : tx.amount,
+      icon: getTxIcon(tx.type),
+      raw: tx,
+    }));
+    renderRecentTxs();
+    renderHistory();
+    
+    // اعلان‌ها
+    const notifs = await apiGetNotifications(state.user.id);
+    state.notifications = notifs;
+    renderNotifications();
+    
+    // قیمت‌ها
+    const prices = await apiGetPrices();
+    if (prices && prices.length) {
+      state.market = state.market.map(m => {
+        const p = prices.find(x => x.symbol === m.symbol);
+        return p ? { ...m, price: parseFloat(p.price), change: parseFloat(p.change_24h) } : m;
+      });
+      renderMarket();
+    }
+  } catch (e) {
+    console.error('loadUserData error:', e);
+  }
+}
+
+function getTxIcon(type) {
+  const icons = {
+    transfer: '📤',
+    invite_reward: '🎁',
+    invite_reward_owner: '🎉',
+    reward: '🎁',
+    stake_interest: '📈',
+  };
+  return icons[type] || '💳';
+}
+
+function formatTime(iso) {
+  const d = new Date(iso);
+  const now = new Date();
+  const diff = (now - d) / 1000;
+  if (diff < 60) return 'همین الان';
+  if (diff < 3600) return Math.floor(diff / 60) + ' دقیقه پیش';
+  if (diff < 86400) return Math.floor(diff / 3600) + ' ساعت پیش';
+  if (diff < 604800) return Math.floor(diff / 86400) + ' روز پیش';
+  return d.toLocaleDateString('fa-IR');
+}
+
+// ═══════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════
+
 function goTo(pageName) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const page = document.querySelector(`[data-page="${pageName}"]`);
@@ -190,13 +399,11 @@ function goTo(pageName) {
   window.scrollTo(0, 0);
 }
 
-// ================== CARD FLIP ==================
 function flipCard() {
   document.getElementById('cardFlip').classList.toggle('flipped');
   if (navigator.vibrate) navigator.vibrate(15);
 }
 
-// ================== PRIVACY ==================
 function togglePrivacy() {
   state.privacy = !state.privacy;
   document.getElementById('balanceMain').classList.toggle('hidden', state.privacy);
@@ -204,11 +411,18 @@ function togglePrivacy() {
   document.getElementById('eyeBtn').textContent = state.privacy ? '🙈' : '👁';
 }
 
-// ================== RENDER ==================
+// ═══════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════
+
 function renderRecentTxs() {
   const c = document.getElementById('recentTxs');
   if (!c) return;
   c.innerHTML = '';
+  if (!state.transactions.length) {
+    c.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-dim); font-size:12px;">هنوز تراکنشی نداری</div>';
+    return;
+  }
   state.transactions.slice(0, 3).forEach(tx => c.appendChild(createTxEl(tx)));
 }
 
@@ -216,6 +430,10 @@ function renderHistory() {
   const c = document.getElementById('historyList');
   if (!c) return;
   c.innerHTML = '';
+  if (!state.transactions.length) {
+    c.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-dim); font-size:13px;">هنوز تراکنشی نداری</div>';
+    return;
+  }
   state.transactions.forEach(tx => c.appendChild(createTxEl(tx)));
 }
 
@@ -223,16 +441,20 @@ function renderNotifications() {
   const c = document.getElementById('notificationsList');
   if (!c) return;
   c.innerHTML = '';
+  if (!state.notifications.length) {
+    c.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-dim); font-size:13px;">اعلانی نداری</div>';
+    return;
+  }
   state.notifications.forEach(n => {
     const d = document.createElement('div');
     d.className = 'tx';
     d.innerHTML = `
-      <div class="tx-ico" style="background:${n.color}">${n.icon}</div>
+      <div class="tx-ico" style="background:rgba(0,184,148,0.15)">${n.icon || '🔔'}</div>
       <div class="tx-body">
         <div class="tx-title">${n.title}</div>
-        <div class="tx-time">${n.desc}</div>
+        <div class="tx-time">${n.message || ''}</div>
       </div>
-      <div class="tx-time">${n.time}</div>
+      <div class="tx-time">${formatTime(n.created_at)}</div>
     `;
     c.appendChild(d);
   });
@@ -288,84 +510,32 @@ function renderMarket(filter = 'all') {
   });
 }
 
-function renderAssets() {
-  const c = document.getElementById('assetList');
-  if (!c) return;
-  c.innerHTML = '';
-  const assets = [
-    { symbol: 'TAT', name: 'TAT', icon: '🪙', amount: '۱٬۲۵۰', value: '۱۲۵٬۰۰۰', percent: 10, color: '#00B894' },
-    { symbol: 'USDT', name: 'تتر', icon: '💵', amount: '۵', value: '۴۵۷٬۵۰۰', percent: 73, color: '#FDCB6E' },
-    { symbol: 'GOLD18', name: 'طلای ۱۸ عیار', icon: '🥇', amount: '۰٫۱ گرم', value: '۲۳۴٬۵۰۰', percent: 17, color: '#6C5CE7' },
-  ];
-  assets.forEach(a => {
-    const d = document.createElement('div');
-    d.className = 'asset-item';
-    d.onclick = () => showAssetDetail(a.symbol);
-    const iconHTML = a.symbol === 'TAT' 
-      ? `<div class="market-coin">${getMiniCoinSVG(40)}</div>`
-      : `<div class="asset-icon" style="background:${a.color}22">${a.icon}</div>`;
-    d.innerHTML = `
-      <div class="asset-top">
-        ${iconHTML}
-        <div class="asset-info">
-          <div class="asset-name">${a.name}</div>
-          <div class="asset-symbol">${a.symbol}</div>
-        </div>
-        <div>
-          <div class="asset-amount">${a.amount}</div>
-          <div class="asset-value">${a.value} تومان</div>
-        </div>
-      </div>
-      <div class="asset-bar"><div class="asset-bar-fill" style="width:${a.percent}%; background:${a.color};"></div></div>
-    `;
-    c.appendChild(d);
-  });
-}
+// ═══════════════════════════════════════
+// MODALS
+// ═══════════════════════════════════════
 
-function renderApps() {
-  const c = document.getElementById('appsList');
-  if (!c) return;
-  c.innerHTML = '';
-  state.apps.forEach((app, idx) => {
-    const d = document.createElement('div');
-    d.className = 'app-card';
-    d.onclick = () => showAppDetail(idx);
-    d.innerHTML = `
-      <div class="app-icon" style="background:rgba(0,184,148,0.15)">${app.icon}</div>
-      <div class="app-body">
-        <div class="app-name">${app.name}</div>
-        <div class="app-meta">آخرین فعالیت: ${app.last}</div>
-        <div class="app-stats"><span>واریز: ${toFa(app.in)}</span><span>برداشت: ${toFa(app.out)}</span></div>
-      </div>
-      <div class="app-balance">${toFa(app.balance)}</div>
-    `;
-    c.appendChild(d);
-  });
-}
-
-// ================== MODALS ==================
 function openModal(type) {
   const m = document.getElementById('modal-' + type);
   if (m) m.classList.add('show');
 }
+
 function closeModal() {
   document.querySelectorAll('.modal').forEach(m => m.classList.remove('show'));
 }
+
 document.addEventListener('click', (e) => {
   if (e.target.classList.contains('modal')) closeModal();
 });
 
-// ================== TX DETAIL ==================
 function showTxDetail(tx) {
   document.getElementById('txDetailIcon').textContent = tx.icon;
   const sign = tx.amount > 0 ? '+' : '−';
-  document.getElementById('txDetailAmount').textContent = sign + toFa(Math.abs(tx.amount));
+  document.getElementById('txDetailAmount').textContent = sign + toFa(Math.abs(tx.amount)) + ' TAT';
   document.getElementById('txDetailAmount').style.color = tx.amount > 0 ? 'var(--success)' : 'var(--danger)';
   document.getElementById('txDetailTitle').textContent = tx.title;
   openModal('tx');
 }
 
-// ================== ASSET DETAIL ==================
 function showAssetDetail(symbol) {
   const a = state.market.find(x => x.symbol === symbol);
   if (!a) return;
@@ -381,10 +551,11 @@ function showAssetDetail(symbol) {
     const color = symbol === 'USDT' ? '#FDCB6E' : '#6C5CE7';
     coinEl.innerHTML = `<div style="width:100px;height:100px;border-radius:50%;background:${color}22;display:flex;align-items:center;justify-content:center;font-size:50px;">${a.icon}</div>`;
   }
+  const hv = document.getElementById('assetHoldingValue');
+  if (hv) hv.textContent = toFa(Math.floor(state.user.balance || 0)) + ' TAT';
   openModal('asset');
 }
 
-// ================== APP DETAIL ==================
 function showAppDetail(idx) {
   const a = state.apps[idx];
   if (!a) return;
@@ -393,61 +564,372 @@ function showAppDetail(idx) {
   openModal('app');
 }
 
-// ================== SEND ==================
+// ═══════════════════════════════════════
+// SEND
+// ═══════════════════════════════════════
+
 function setAmount(v) {
   const i = document.getElementById('sendAmount');
-  if (v === 'max') i.value = state.user.balance;
+  if (v === 'max') i.value = Math.floor(state.user.balance || 0);
   else i.value = v;
 }
-function confirmSend() {
-  const a = parseFloat(document.getElementById('sendAmount').value);
-  if (!a || a <= 0) { showToast('مقدار معتبر وارد کن ❌'); return; }
-  if (a > state.user.balance) { showToast('موجودی کافی نیست ❌'); return; }
-  state.user.balance -= a;
-  updateBalance();
-  closeModal();
-  showToast('ارسال شد ✅');
-  document.getElementById('sendAmount').value = '';
+
+async function confirmSend() {
+  const recipient = document.getElementById('sendRecipient').value.trim();
+  const amount = parseFloat(document.getElementById('sendAmount').value);
+  const note = document.getElementById('sendNote').value.trim() || null;
+  
+  if (!recipient) { showToast('آیدی گیرنده رو وارد کن ❌'); return; }
+  if (!amount || amount <= 0) { showToast('مقدار معتبر وارد کن ❌'); return; }
+  if (amount > state.user.balance) { showToast('موجودی کافی نیست ❌'); return; }
+  
+  try {
+    showToast('در حال ارسال... ⏳');
+    const result = await apiTransfer(recipient, amount, note);
+    
+    state.user.balance = result.newBalance;
+    saveSession(state.user);
+    updateUserUI();
+    closeModal();
+    showToast('ارسال شد ✅');
+    
+    document.getElementById('sendRecipient').value = '';
+    document.getElementById('sendAmount').value = '';
+    document.getElementById('sendNote').value = '';
+    
+    await loadUserData();
+  } catch (error) {
+    console.error(error);
+    showToast(error.message || 'خطا در ارسال ❌');
+  }
 }
 
-// ================== BUY ==================
+// ═══════════════════════════════════════
+// BUY/SELL
+// ═══════════════════════════════════════
+
 function openBuyModal(type) {
   document.getElementById('buyModalTitle').textContent = type === 'buy' ? '🟢 خرید TAT' : '🔴 فروش TAT';
   openModal('buy');
 }
+
 function setBuyAmount(p) {
-  document.getElementById('buyAmount').value = Math.floor(1250000 * p / 100);
+  const bal = Math.floor((state.user.balance || 0) * 100);
+  document.getElementById('buyAmount').value = Math.floor(bal * p / 100);
 }
+
 function confirmBuy() {
   const a = parseFloat(document.getElementById('buyAmount').value);
   if (!a || a <= 0) { showToast('مقدار معتبر وارد کن ❌'); return; }
   closeModal();
-  showToast('معامله انجام شد ✅');
+  showToast('در نسخه بعدی فعال میشه 🚧');
 }
 
-// ================== STAKE ==================
+// ═══════════════════════════════════════
+// STAKE
+// ═══════════════════════════════════════
+
 function openStakeModal(type, rate) {
   const labels = { flexible: 'انعطاف‌پذیر', '1m': '۱ ماهه', '3m': '۳ ماهه', '6m': '۶ ماهه' };
   document.getElementById('stakeTypeLabel').textContent = labels[type];
   document.getElementById('stakeRateLabel').textContent = toFa(rate) + '٪ سالانه';
   openModal('stake');
 }
+
 function setStakeAmount(p) {
-  document.getElementById('stakeAmount').value = Math.floor(state.user.balance * p / 100);
+  document.getElementById('stakeAmount').value = Math.floor((state.user.balance || 0) * p / 100);
 }
+
 function confirmStake() {
   const a = parseFloat(document.getElementById('stakeAmount').value);
   if (!a || a <= 0) { showToast('مقدار معتبر وارد کن ❌'); return; }
   closeModal();
-  showToast('سپرده‌گذاری انجام شد ✅');
+  showToast('سپرده‌گذاری در نسخه بعدی 🚧');
 }
 
-// ================== BALANCE ==================
-function updateBalance() {
-  document.getElementById('balanceValue').textContent = toFa(state.user.balance.toFixed(2)).replace('.', '٫');
+// ═══════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════
+
+function toFa(num) {
+  const p = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+  return String(num).replace(/\d/g, d => p[d]);
 }
 
-// ================== TABS & FILTERS ==================
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function copyText(text) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => showToast('کپی شد 📋'));
+  } else {
+    showToast('کپی شد 📋');
+  }
+}
+
+function copyMyUserId() {
+  if (state.user.userId) copyText(state.user.userId);
+}
+function copyMyCard() {
+  if (state.user.cardNumber) copyText(state.user.cardNumber);
+}
+
+function logout() {
+  if (confirm('مطمئنی می‌خوای خارج بشی؟')) {
+    clearSession();
+    location.reload();
+  }
+}
+
+// ═══════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════
+
+function loadSettings() {
+  const s = localStorage.getItem('tat_settings');
+  if (s) Object.assign(settings, JSON.parse(s));
+  applySettingsToUI();
+}
+
+function saveSettings() {
+  localStorage.setItem('tat_settings', JSON.stringify(settings));
+}
+
+function applySettingsToUI() {
+  const fp = document.getElementById('toggleFingerprint');
+  const tfa = document.getElementById('toggle2FA');
+  const txn = document.getElementById('toggleTxNotify');
+  const pn = document.getElementById('togglePriceNotify');
+  const rn = document.getElementById('toggleRewardNotify');
+  const th = document.getElementById('toggleTheme');
+  
+  if (fp) fp.classList.toggle('active', settings.fingerprint);
+  if (tfa) tfa.classList.toggle('active', settings.twoFA);
+  if (txn) txn.classList.toggle('active', settings.txNotify);
+  if (pn) pn.classList.toggle('active', settings.priceNotify);
+  if (rn) rn.classList.toggle('active', settings.rewardNotify);
+  if (th) th.classList.toggle('active', settings.darkMode);
+  
+  const lb = document.getElementById('langBadge');
+  if (lb) {
+    const langs = { fa: 'فارسی', en: 'English', ar: 'العربية' };
+    lb.textContent = langs[settings.language] + ' ›';
+  }
+  
+  const fb = document.getElementById('fontBadge');
+  if (fb) {
+    const fonts = { small: 'کوچیک', medium: 'متوسط', large: 'بزرگ' };
+    fb.textContent = fonts[settings.fontSize] + ' ›';
+  }
+}
+
+function openSettingsModal(type) {
+  const m = document.getElementById('modal-' + type);
+  if (m) m.classList.add('show');
+  if (navigator.vibrate) navigator.vibrate(10);
+}
+
+function savePassword() {
+  const o = document.getElementById('oldPassword').value;
+  const n = document.getElementById('newPassword').value;
+  const c = document.getElementById('confirmPassword').value;
+  if (!o || !n || !c) { showToast('همه فیلدها رو پر کن ❌'); return; }
+  if (n.length < 6) { showToast('رمز جدید حداقل ۶ کاراکتر باشه ❌'); return; }
+  if (n !== c) { showToast('رمز جدید و تأییدش یکسان نیستن ❌'); return; }
+  closeModal();
+  showToast('رمز عبور تغییر کرد ✅');
+  document.getElementById('oldPassword').value = '';
+  document.getElementById('newPassword').value = '';
+  document.getElementById('confirmPassword').value = '';
+  document.getElementById('passwordStrength').innerHTML = '';
+}
+
+document.addEventListener('input', (e) => {
+  if (e.target.id === 'newPassword') {
+    const val = e.target.value;
+    const s = document.getElementById('passwordStrength');
+    if (!s) return;
+    let score = 0;
+    if (val.length >= 6) score++;
+    if (val.length >= 10) score++;
+    if (/[A-Z]/.test(val)) score++;
+    if (/[0-9]/.test(val)) score++;
+    if (/[^A-Za-z0-9]/.test(val)) score++;
+    const levels = [
+      { t: 'خیلی ضعیف', c: '#ff4757', w: '20%' },
+      { t: 'ضعیف', c: '#ff6b6b', w: '40%' },
+      { t: 'متوسط', c: '#FDCB6E', w: '60%' },
+      { t: 'خوب', c: '#00d97e', w: '80%' },
+      { t: 'عالی', c: '#00B894', w: '100%' },
+    ];
+    const l = levels[Math.min(score, 4)];
+    s.innerHTML = `<div style="height:4px; background:rgba(255,255,255,0.1); border-radius:4px; overflow:hidden; margin-top:8px;"><div style="height:100%; width:${l.w}; background:${l.c}; transition:0.3s;"></div></div><div style="font-size:11px; color:${l.c}; margin-top:4px;">${l.t}</div>`;
+  }
+});
+
+function toggle2FA(el) {
+  if (!settings.twoFA) openSettingsModal('2fa');
+  else {
+    if (confirm('2FA رو غیرفعال کنم؟')) {
+      settings.twoFA = false;
+      el.classList.remove('active');
+      saveSettings();
+      showToast('2FA غیرفعال شد 🔓');
+    }
+  }
+}
+
+function activate2FA() {
+  const c = document.getElementById('twoFACode').value;
+  if (c.length !== 6) { showToast('کد ۶ رقمی رو کامل وارد کن ❌'); return; }
+  settings.twoFA = true;
+  saveSettings();
+  applySettingsToUI();
+  closeModal();
+  showToast('2FA فعال شد ✅');
+  document.getElementById('twoFACode').value = '';
+}
+
+function toggleFingerprint(el) {
+  settings.fingerprint = !settings.fingerprint;
+  el.classList.toggle('active', settings.fingerprint);
+  saveSettings();
+  showToast(settings.fingerprint ? 'اثر انگشت فعال شد 👆' : 'اثر انگشت غیرفعال شد');
+}
+
+function savePersonalInfo() {
+  const name = document.getElementById('editName').value.trim();
+  const phone = document.getElementById('editPhone').value.trim();
+  const email = document.getElementById('editEmail').value.trim();
+  if (name) {
+    state.user.name = name;
+    saveSession(state.user);
+  }
+  state.user.phone = phone;
+  state.user.email = email;
+  saveSession(state.user);
+  updateUserUI();
+  closeModal();
+  showToast('اطلاعات ذخیره شد ✅');
+}
+
+function copyInviteLink() {
+  copyText(document.getElementById('inviteLink').textContent);
+}
+
+function copyMyActiveCode() {
+  const code = document.getElementById('myActiveCode').textContent;
+  if (code && code !== '-') copyText(code);
+}
+
+async function createNewInviteCode() {
+  try {
+    showToast('در حال ساخت کد... ⏳');
+    const code = await apiCreateInviteCode('normal');
+    document.getElementById('myActiveCode').textContent = code;
+    showToast('کد ساخته شد ✅');
+  } catch (e) {
+    showToast(e.message || 'خطا در ساخت کد');
+  }
+}
+
+function shareTelegram() {
+  const l = document.getElementById('inviteLink').textContent;
+  window.open('https://t.me/share/url?url=' + encodeURIComponent(l) + '&text=' + encodeURIComponent('با TAT Wallet آشنا شو! 🪙'), '_blank');
+}
+
+function shareWhatsApp() {
+  const l = document.getElementById('inviteLink').textContent;
+  window.open('https://wa.me/?text=' + encodeURIComponent('با TAT Wallet آشنا شو! 🪙 ' + l), '_blank');
+}
+
+function shareMore() {
+  const l = document.getElementById('inviteLink').textContent;
+  if (navigator.share) navigator.share({ title: 'TAT Wallet', text: 'با TAT Wallet آشنا شو! 🪙', url: l });
+  else copyText(l);
+}
+
+function switchReport(p, btn) {
+  document.querySelectorAll('.report-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  showToast('گزارش ' + p + ' بارگذاری شد');
+}
+
+function downloadReport() {
+  const csv = `تاریخ,نوع,مقدار,توضیحات\n`;
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'TAT-Report.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('گزارش دانلود شد 📥');
+}
+
+function setLanguage(lang, btn) {
+  document.querySelectorAll('.lang-option').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  settings.language = lang;
+  saveSettings();
+  applySettingsToUI();
+  const names = { fa: 'فارسی', en: 'English', ar: 'العربية' };
+  closeModal();
+  showToast('زبان به ' + names[lang] + ' تغییر کرد 🌐');
+}
+
+function toggleFaq(el) {
+  el.classList.toggle('open');
+  const i = el.querySelector('.faq-icon');
+  i.textContent = el.classList.contains('open') ? '−' : '+';
+}
+
+function openChat() { showToast('چت زنده به‌زودی 💬'); }
+function openTelegram() { window.open('https://t.me/TATWalletSupport', '_blank'); }
+function openEmail() { window.location.href = 'mailto:support@tat.wallet'; }
+
+function sendTicket() {
+  const m = document.getElementById('ticketMessage').value.trim();
+  if (!m) { showToast('توضیحات رو بنویس ❌'); return; }
+  document.getElementById('ticketMessage').value = '';
+  closeModal();
+  showToast('تیکت ارسال شد ✅');
+}
+
+function setFontSize(s, btn) {
+  document.querySelectorAll('.font-option').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  settings.fontSize = s;
+  saveSettings();
+  applySettingsToUI();
+  closeModal();
+  showToast('اندازه فونت تغییر کرد 📏');
+}
+
+function toggleThemeSetting(el) {
+  settings.darkMode = !settings.darkMode;
+  el.classList.toggle('active', settings.darkMode);
+  saveSettings();
+  if (!settings.darkMode) {
+    document.body.classList.add('light-mode');
+    showToast('حالت روشن ☀️');
+  } else {
+    document.body.classList.remove('light-mode');
+    showToast('حالت تیره 🌙');
+  }
+}
+
+function toggleSimple(el, key) {
+  settings[key] = !settings[key];
+  el.classList.toggle('active', settings[key]);
+  saveSettings();
+}
+
 function initTabs() {
   document.querySelectorAll('.chart-tab').forEach(t => {
     t.addEventListener('click', function() {
@@ -456,6 +938,7 @@ function initTabs() {
     });
   });
 }
+
 function initFilters() {
   document.querySelectorAll('.filter-chip').forEach(c => {
     c.addEventListener('click', function() {
@@ -498,332 +981,4 @@ function initFilters() {
       });
     });
   }
-}
-
-// ================== UTILS ==================
-function toFa(num) {
-  const p = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
-  return String(num).replace(/\d/g, d => p[d]);
-}
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(t._timer);
-  t._timer = setTimeout(() => t.classList.remove('show'), 2200);
-}
-function copyText(text) {
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(text).then(() => showToast('کپی شد 📋'));
-  } else {
-    showToast('کپی شد 📋');
-  }
-}
-function logout() {
-  if (confirm('مطمئنی می‌خوای خارج بشی؟')) {
-    localStorage.removeItem('tat_logged_in');
-    location.reload();
-  }
-}
-
-// ═══════════════════════════════════════════
-// SETTINGS LOGIC
-// ═══════════════════════════════════════════
-
-function loadSettings() {
-  const s = localStorage.getItem('tat_settings');
-  if (s) Object.assign(settings, JSON.parse(s));
-  applySettingsToUI();
-}
-
-function saveSettings() {
-  localStorage.setItem('tat_settings', JSON.stringify(settings));
-}
-
-function applySettingsToUI() {
-  const fp = document.getElementById('toggleFingerprint');
-  const tfa = document.getElementById('toggle2FA');
-  const txn = document.getElementById('toggleTxNotify');
-  const pn = document.getElementById('togglePriceNotify');
-  const rn = document.getElementById('toggleRewardNotify');
-  const th = document.getElementById('toggleTheme');
-  
-  if (fp) fp.classList.toggle('active', settings.fingerprint);
-  if (tfa) tfa.classList.toggle('active', settings.twoFA);
-  if (txn) txn.classList.toggle('active', settings.txNotify);
-  if (pn) pn.classList.toggle('active', settings.priceNotify);
-  if (rn) rn.classList.toggle('active', settings.rewardNotify);
-  if (th) th.classList.toggle('active', settings.darkMode);
-  
-  const lb = document.getElementById('langBadge');
-  if (lb) {
-    const langs = { fa: 'فارسی', en: 'English', ar: 'العربية' };
-    lb.textContent = langs[settings.language] + ' ›';
-  }
-  
-  const fb = document.getElementById('fontBadge');
-  if (fb) {
-    const fonts = { small: 'کوچیک', medium: 'متوسط', large: 'بزرگ' };
-    fb.textContent = fonts[settings.fontSize] + ' ›';
-  }
-  
-  document.documentElement.style.fontSize = 
-    settings.fontSize === 'small' ? '14px' :
-    settings.fontSize === 'large' ? '18px' : '16px';
-  
-  const ic = document.getElementById('inviteCount');
-  const ir = document.getElementById('inviteReward');
-  if (ic) ic.textContent = toFa(settings.inviteCount);
-  if (ir) ir.textContent = toFa(settings.inviteReward);
-}
-
-function loadPersonalInfo() {
-  const pi = localStorage.getItem('tat_personal_info');
-  if (pi) {
-    const info = JSON.parse(pi);
-    if (info.name) {
-      state.user.name = info.name;
-      const un = document.getElementById('userName');
-      if (un) un.textContent = info.name;
-      const pn = document.getElementById('profileName');
-      if (pn) pn.textContent = info.name;
-      const ch = document.getElementById('cardHolder');
-      if (ch) ch.textContent = info.name.toUpperCase();
-      const chb = document.getElementById('cardHolderBack');
-      if (chb) chb.textContent = info.name.toUpperCase();
-    }
-    const ep = document.getElementById('editPhone');
-    if (ep && info.phone) ep.value = info.phone;
-    const ee = document.getElementById('editEmail');
-    if (ee && info.email) ee.value = info.email;
-    const en = document.getElementById('editName');
-    if (en && info.name) en.value = info.name;
-  }
-}
-
-function openSettingsModal(type) {
-  const m = document.getElementById('modal-' + type);
-  if (m) m.classList.add('show');
-  if (navigator.vibrate) navigator.vibrate(10);
-}
-
-// Change Password
-function savePassword() {
-  const o = document.getElementById('oldPassword').value;
-  const n = document.getElementById('newPassword').value;
-  const c = document.getElementById('confirmPassword').value;
-  if (!o || !n || !c) { showToast('همه فیلدها رو پر کن ❌'); return; }
-  if (n.length < 6) { showToast('رمز جدید حداقل ۶ کاراکتر باشه ❌'); return; }
-  if (n !== c) { showToast('رمز جدید و تأییدش یکسان نیستن ❌'); return; }
-  localStorage.setItem('tat_password', btoa(n));
-  closeModal();
-  showToast('رمز عبور با موفقیت تغییر کرد ✅');
-  document.getElementById('oldPassword').value = '';
-  document.getElementById('newPassword').value = '';
-  document.getElementById('confirmPassword').value = '';
-  document.getElementById('passwordStrength').innerHTML = '';
-}
-
-document.addEventListener('input', (e) => {
-  if (e.target.id === 'newPassword') {
-    const val = e.target.value;
-    const s = document.getElementById('passwordStrength');
-    if (!s) return;
-    let score = 0;
-    if (val.length >= 6) score++;
-    if (val.length >= 10) score++;
-    if (/[A-Z]/.test(val)) score++;
-    if (/[0-9]/.test(val)) score++;
-    if (/[^A-Za-z0-9]/.test(val)) score++;
-    const levels = [
-      { t: 'خیلی ضعیف', c: '#ff4757', w: '20%' },
-      { t: 'ضعیف', c: '#ff6b6b', w: '40%' },
-      { t: 'متوسط', c: '#FDCB6E', w: '60%' },
-      { t: 'خوب', c: '#00d97e', w: '80%' },
-      { t: 'عالی', c: '#00B894', w: '100%' },
-    ];
-    const l = levels[Math.min(score, 4)];
-    s.innerHTML = `<div style="height:4px; background:rgba(255,255,255,0.1); border-radius:4px; overflow:hidden; margin-top:8px;"><div style="height:100%; width:${l.w}; background:${l.c}; transition:0.3s;"></div></div><div style="font-size:11px; color:${l.c}; margin-top:4px;">${l.t}</div>`;
-  }
-});
-
-// 2FA
-function toggle2FA(el) {
-  if (!settings.twoFA) openSettingsModal('2fa');
-  else {
-    if (confirm('2FA رو غیرفعال کنم؟')) {
-      settings.twoFA = false;
-      el.classList.remove('active');
-      saveSettings();
-      showToast('2FA غیرفعال شد 🔓');
-    }
-  }
-}
-
-function activate2FA() {
-  const c = document.getElementById('twoFACode').value;
-  if (c.length !== 6) { showToast('کد ۶ رقمی رو کامل وارد کن ❌'); return; }
-  settings.twoFA = true;
-  saveSettings();
-  applySettingsToUI();
-  closeModal();
-  showToast('2FA فعال شد ✅');
-  document.getElementById('twoFACode').value = '';
-}
-
-// Fingerprint
-function toggleFingerprint(el) {
-  settings.fingerprint = !settings.fingerprint;
-  el.classList.toggle('active', settings.fingerprint);
-  saveSettings();
-  showToast(settings.fingerprint ? 'اثر انگشت فعال شد 👆' : 'اثر انگشت غیرفعال شد');
-}
-
-// Personal Info
-function savePersonalInfo() {
-  const name = document.getElementById('editName').value.trim();
-  const phone = document.getElementById('editPhone').value.trim();
-  const email = document.getElementById('editEmail').value.trim();
-  if (!name) { showToast('نام نمی‌تونه خالی باشه ❌'); return; }
-  localStorage.setItem('tat_personal_info', JSON.stringify({ name, phone, email }));
-  state.user.name = name;
-  document.getElementById('userName').textContent = name;
-  document.getElementById('profileName').textContent = name;
-  const ch = document.getElementById('cardHolder');
-  if (ch) ch.textContent = name.toUpperCase();
-  const chb = document.getElementById('cardHolderBack');
-  if (chb) chb.textContent = name.toUpperCase();
-  closeModal();
-  showToast('اطلاعات ذخیره شد ✅');
-}
-
-// Invite
-function copyInviteLink() {
-  copyText(document.getElementById('inviteLink').textContent);
-}
-function shareTelegram() {
-  const l = document.getElementById('inviteLink').textContent;
-  window.open('https://t.me/share/url?url=' + encodeURIComponent(l) + '&text=' + encodeURIComponent('با TAT Wallet آشنا شو! 🪙'), '_blank');
-}
-function shareWhatsApp() {
-  const l = document.getElementById('inviteLink').textContent;
-  window.open('https://wa.me/?text=' + encodeURIComponent('با TAT Wallet آشنا شو! 🪙 ' + l), '_blank');
-}
-function shareMore() {
-  const l = document.getElementById('inviteLink').textContent;
-  if (navigator.share) navigator.share({ title: 'TAT Wallet', text: 'با TAT Wallet آشنا شو! 🪙', url: l });
-  else copyText(l);
-}
-
-// Reports
-function switchReport(p, btn) {
-  document.querySelectorAll('.report-tab').forEach(t => t.classList.remove('active'));
-  btn.classList.add('active');
-  const data = {
-    week: { in: '+۵۰۰', out: '−۲۰۰', stake: '+۱۲', total: '+۲۸۸' },
-    month: { in: '+۲٬۵۰۰', out: '−۸۵۰', stake: '+۱۲۵', total: '+۱٬۷۷۵' },
-    year: { in: '+۳۰٬۰۰۰', out: '−۱۰٬۲۰۰', stake: '+۱٬۵۰۰', total: '+۲۰٬۸۰۰' },
-  };
-  const d = data[p];
-  const rows = document.querySelectorAll('#modal-reports .report-row');
-  if (rows.length >= 4) {
-    rows[0].querySelector('span:last-child').textContent = d.in + ' TAT';
-    rows[1].querySelector('span:last-child').textContent = d.out + ' TAT';
-    rows[2].querySelector('span:last-child').textContent = d.stake + ' TAT';
-    rows[3].querySelector('span:last-child').textContent = d.total + ' TAT';
-  }
-}
-
-function downloadReport() {
-  const csv = `تاریخ,نوع,مقدار,توضیحات\n۱۴۰۵/۰۱/۰۱,واریز,+۵۰۰,افزایش موجودی\n۱۴۰۵/۰۱/۰۲,جایزه,+۵۰,Space Run\n۱۴۰۵/۰۱/۰۳,برداشت,−۱۰۰,ارسال به سارا\n۱۴۰۵/۰۱/۰۵,سود,+۱۲,سود سپرده روزانه`;
-  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'TAT-Report.csv';
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast('گزارش دانلود شد 📥');
-}
-
-// Language
-function setLanguage(lang, btn) {
-  document.querySelectorAll('.lang-option').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  settings.language = lang;
-  saveSettings();
-  applySettingsToUI();
-  const names = { fa: 'فارسی', en: 'English', ar: 'العربية' };
-  closeModal();
-  showToast('زبان به ' + names[lang] + ' تغییر کرد 🌐');
-}
-
-// FAQ
-function toggleFaq(el) {
-  el.classList.toggle('open');
-  const i = el.querySelector('.faq-icon');
-  i.textContent = el.classList.contains('open') ? '−' : '+';
-}
-
-// Support
-function openChat() { showToast('چت زنده به‌زودی باز می‌شه 💬'); }
-function openTelegram() { window.open('https://t.me/TATWalletSupport', '_blank'); }
-function openEmail() { window.location.href = 'mailto:support@tat.wallet'; }
-
-function sendTicket() {
-  const s = document.getElementById('ticketSubject').value;
-  const m = document.getElementById('ticketMessage').value.trim();
-  if (!m) { showToast('توضیحات رو بنویس ❌'); return; }
-  const tickets = JSON.parse(localStorage.getItem('tat_tickets') || '[]');
-  tickets.push({ id: 'TKT-' + Date.now(), subject: s, message: m, date: new Date().toISOString(), status: 'open' });
-  localStorage.setItem('tat_tickets', JSON.stringify(tickets));
-  document.getElementById('ticketMessage').value = '';
-  closeModal();
-  showToast('تیکت با موفقیت ارسال شد ✅');
-}
-
-// Devices
-function removeDevice(btn) {
-  if (confirm('این دستگاه رو حذف کنم؟')) {
-    btn.closest('.device-item').remove();
-    showToast('دستگاه حذف شد ✅');
-  }
-}
-function removeAllDevices() {
-  if (confirm('از همه دستگاه‌ها خارج بشم؟')) {
-    document.querySelectorAll('.device-item:not(.current)').forEach(d => d.remove());
-    showToast('از همه دستگاه‌ها خارج شدی ✅');
-  }
-}
-
-// Font Size
-function setFontSize(s, btn) {
-  document.querySelectorAll('.font-option').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  settings.fontSize = s;
-  saveSettings();
-  applySettingsToUI();
-  closeModal();
-  showToast('اندازه فونت تغییر کرد 📏');
-}
-
-// Theme
-function toggleThemeSetting(el) {
-  settings.darkMode = !settings.darkMode;
-  el.classList.toggle('active', settings.darkMode);
-  saveSettings();
-  if (!settings.darkMode) {
-    document.body.classList.add('light-mode');
-    showToast('حالت روشن ☀️');
-  } else {
-    document.body.classList.remove('light-mode');
-    showToast('حالت تیره 🌙');
-  }
-}
-
-// Simple Toggles
-function toggleSimple(el, key) {
-  settings[key] = !settings[key];
-  el.classList.toggle('active', settings[key]);
-  saveSettings();
 }
