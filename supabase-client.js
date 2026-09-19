@@ -98,14 +98,3 @@ async function apiGetNotifications(userId) {
   return data || [];
 }
 
-// ═══ Session ═══
-function saveSession(user) {
-  localStorage.setItem('tat_user', JSON.stringify(user));
-}
-function getSession() {
-  const data = localStorage.getItem('tat_user');
-  return data ? JSON.parse(data) : null;
-}
-function clearSession() {
-  localStorage.removeItem('tat_user');
-}
