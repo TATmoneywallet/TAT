@@ -27,12 +27,14 @@ async function apiLogin(phone, email, userId) {
 }
 
 // ═══ Invite Codes ═══
-async function apiCreateInviteCode(type = 'normal', message = null) {
+async function apiCreateInviteCode(userId, type = 'normal', message = null) {
   const { data, error } = await supabase.functions.invoke('create-invite-code', {
-    body: { type, message }
+    body: { userId, type, message }
   });
+  
   if (error) throw new Error(error.message);
   if (data.error) throw new Error(data.error);
+  
   return data.code;
 }
 
