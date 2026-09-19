@@ -5,7 +5,7 @@
 const SUPABASE_URL = 'https://lvujgergogwodfskkqrh.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2dWpnZXJnb2d3b2Rmc2trcXJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk3NDYwNTEsImV4cCI6MjEwNTMyMjA1MX0.W1OPbhAaBbtJrfgir3Nez4iP8tBWShXv7wFYkYGNKrY';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ═══ Auth ═══
 async function apiRegister(inviteCode, name, phone, email, nationalId) {
@@ -98,14 +98,3 @@ async function apiGetNotifications(userId) {
   return data || [];
 }
 
-// ═══ Session ═══
-function saveSession(user) {
-  localStorage.setItem('tat_user', JSON.stringify(user));
-}
-function getSession() {
-  const data = localStorage.getItem('tat_user');
-  return data ? JSON.parse(data) : null;
-}
-function clearSession() {
-  localStorage.removeItem('tat_user');
-}

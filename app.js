@@ -2,7 +2,31 @@
    TAT Wallet — Application Logic (v1.1.0)
    ═══════════════════════════════════════════ */
 
-// ================== STATE ==================
+// ═══════════════════════════════════════
+// SESSION (Local)
+// ═══════════════════════════════════════
+
+function getSession() {
+  try {
+    const data = localStorage.getItem('tat_user');
+    return data ? JSON.parse(data) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function saveSession(user) {
+  localStorage.setItem('tat_user', JSON.stringify(user));
+}
+
+function clearSession() {
+  localStorage.removeItem('tat_user');
+}
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+
 const state = {
   user: {
     id: null,
@@ -30,7 +54,10 @@ const state = {
   notifications: [],
 };
 
-// ================== SETTINGS ==================
+// ═══════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════
+
 const settings = {
   fingerprint: false,
   twoFA: false,
@@ -42,7 +69,10 @@ const settings = {
   fontSize: 'medium',
 };
 
-// ================== SVG COIN ==================
+// ═══════════════════════════════════════
+// SVG COIN
+// ═══════════════════════════════════════
+
 function getCoinSVG(size = 40, options = {}) {
   const { vip = false } = options;
   const edgeColors = vip 
@@ -112,9 +142,11 @@ function getMiniCoinSVG(size = 40) {
   `;
 }
 
-// ================== INIT ==================
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+
 document.addEventListener('DOMContentLoaded', () => {
-  // Coins
   const splashCoin = document.getElementById('splashCoin');
   if (splashCoin) splashCoin.innerHTML = getCoinSVG(120);
   
@@ -130,13 +162,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const pqCoinTAT = document.getElementById('pqCoinTAT');
   if (pqCoinTAT) pqCoinTAT.innerHTML = getMiniCoinSVG(28);
   
-  // Init
   renderMarket();
   initTabs();
   initFilters();
   loadSettings();
   
-  // Splash
   setTimeout(() => {
     const splash = document.getElementById('splash');
     if (splash) splash.style.display = 'none';
@@ -330,7 +360,6 @@ function updateUserUI() {
 async function loadUserData() {
   if (!state.user.id) return;
   try {
-    // تراکنش‌ها
     const txs = await apiGetTransactions(state.user.id);
     state.transactions = txs.map(tx => ({
       id: tx.id,
@@ -344,12 +373,10 @@ async function loadUserData() {
     renderRecentTxs();
     renderHistory();
     
-    // اعلان‌ها
     const notifs = await apiGetNotifications(state.user.id);
     state.notifications = notifs;
     renderNotifications();
     
-    // قیمت‌ها
     const prices = await apiGetPrices();
     if (prices && prices.length) {
       state.market = state.market.map(m => {
@@ -675,6 +702,7 @@ function copyText(text) {
 function copyMyUserId() {
   if (state.user.userId) copyText(state.user.userId);
 }
+
 function copyMyCard() {
   if (state.user.cardNumber) copyText(state.user.cardNumber);
 }
