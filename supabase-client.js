@@ -97,4 +97,17 @@ async function apiGetNotifications(userId) {
   if (error) throw error;
   return data || [];
 }
+// ═══════════════════════════════════════
+// Update Profile
+// ═══════════════════════════════════════
 
+async function apiUpdateProfile(userId, name, phone, email, avatar) {
+  const { data, error } = await supabase.functions.invoke('update-profile', {
+    body: { userId, name, phone, email, avatar }
+  });
+  
+  if (error) throw new Error(error.message || 'خطا در بروزرسانی');
+  if (data.error) throw new Error(data.error);
+  
+  return data;
+}

@@ -830,20 +830,48 @@ function toggleFingerprint(el) {
   showToast(settings.fingerprint ? 'اثر انگشت فعال شد 👆' : 'اثر انگشت غیرفعال شد');
 }
 
-function savePersonalInfo() {
+async function savePersonalInfo() {
   const name = document.getElementById('editName').value.trim();
   const phone = document.getElementById('editPhone').value.trim();
   const email = document.getElementById('editEmail').value.trim();
-  if (name) {
-    state.user.name = name;
-    saveSession(state.user);
+  
+  if (!state.user.id) {
+    showToast('ابتدا وارد حساب شو ❌');
+    return;
   }
-  state.user.phone = phone;
-  state.user.email = email;
-  saveSession(state.user);
-  updateUserUI();
-  closeModal();
-  showToast('اطلاعات ذخیره شد ✅');
+  
+  if (!name && !phone && !email) {
+    showToast('حداقل یه فیلد رو پر کن ❌');
+    return;
+  }
+  
+  try {
+    showToast('در حال ذخیره... ⏳');
+    
+    const result = await apiUpdateProfile(
+      state.user.id,
+      name || null,
+      phone || null,
+      email || null,
+      state.user.avatar
+    );
+    
+    // آپدیت state و session
+    state.user.name = result.user.name;
+    state.user.phone = result.user.phone;
+    state.user.email = result.user.email;
+    state.user.profileLevel = result.user.profileLevel;
+    
+    saveSession(state.user);
+    updateUserUI();
+    
+    closeModal();
+    showToast('اطلاعات در دیتابیس ذخیره شد ✅');
+    
+  } catch (error) {
+    console.error('savePersonalInfo error:', error);
+    showToast(error.message || 'خطا در ذخیره اطلاعات ❌');
+  }
 }
 
 function copyInviteLink() {
