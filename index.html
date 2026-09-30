@@ -186,17 +186,20 @@
       </div>
 
       <!-- ACTIONS -->
-      <div class="actions">
-        <button class="action-btn" onclick="openModal('send')">
-          <span class="ico">📤</span> ارسال
-        </button>
-        <button class="action-btn" onclick="openModal('receive')">
-          <span class="ico">📥</span> دریافت
-        </button>
-        <button class="action-btn" onclick="goTo('staking')">
-          <span class="ico">💰</span> سپرده
-        </button>
-      </div>
+      <div class="actions" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
+  <button class="action-btn" onclick="openModal('send')">
+    <span class="ico">📤</span> ارسال
+  </button>
+  <button class="action-btn" onclick="openModal('receive')">
+    <span class="ico">📥</span> دریافت
+  </button>
+  <button class="action-btn" onclick="goTo('staking')">
+    <span class="ico">💰</span> سپرده
+  </button>
+  <button class="action-btn" onclick="openBankAccounts()">
+    <span class="ico">🏦</span> حساب‌ها
+  </button>
+</div>
 
       <!-- PORTFOLIO QUICK -->
       <div class="section-head">
@@ -1333,3 +1336,59 @@
 <script src="app.js"></script>
 </body>
 </html>
+
+<!-- ═══ MODAL: حساب‌های بانکی ═══ -->
+<div class="modal" id="modal-bank-accounts">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🏦 حساب‌های بانکی من</div>
+
+    <div id="bankAccountsList" class="bank-accounts-list">
+      <div class="loading">در حال بارگذاری...</div>
+    </div>
+
+    <button class="btn btn-primary" onclick="openNewAccountModal()" style="margin-top:16px;">
+      ➕ ساخت حساب جدید
+    </button>
+    <button class="btn btn-ghost" onclick="closeModal()">بستن</button>
+  </div>
+</div>
+
+<!-- ═══ MODAL: جزئیات حساب ═══ -->
+<div class="modal" id="modal-account-details">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📋 جزئیات حساب</div>
+
+    <div id="accountDetailsContent"></div>
+
+    <button class="btn btn-primary" onclick="downloadAccountPDF()" style="margin-top:16px;">
+      📥 دانلود PDF کارت
+    </button>
+    <button class="btn btn-ghost" onclick="closeModal()">بستن</button>
+  </div>
+</div>
+
+<!-- ═══ MODAL: ساخت حساب جدید ═══ -->
+<div class="modal" id="modal-new-account">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">➕ ساخت حساب جدید</div>
+
+    <div class="form-group">
+      <label class="form-label">نام صاحب حساب</label>
+      <input class="form-input" id="newAccountHolder" placeholder="مثلاً: علی احمدی">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">نوع حساب</label>
+      <select class="form-input" id="newAccountType" style="direction:rtl; text-align:right;">
+        <option value="savings">🟡 حساب ذخیره</option>
+        <option value="vip">💎 حساب VIP</option>
+      </select>
+    </div>
+
+    <button class="btn btn-primary" onclick="createNewAccount()">ساخت حساب</button>
+    <button class="btn btn-ghost" onclick="closeModal()">لغو</button>
+  </div>
+</div>

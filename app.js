@@ -1048,3 +1048,336 @@ function initFilters() {
     });
   }
 }
+
+// ═══════════════════════════════════════
+// BANK ACCOUNTS
+// ═══════════════════════════════════════
+
+let currentAccountForPDF = null;
+
+async function openBankAccounts() {
+  openModal('bank-accounts');
+  await loadBankAccounts();
+}
+
+async function loadBankAccounts() {
+  const container = document.getElementById('bankAccountsList');
+  if (!container) return;
+  
+  container.innerHTML = '<div class="loading">در حال بارگذاری...</div>';
+
+  try {
+    const accounts = await apiGetBankAccounts(state.user.id);
+    
+    if (!accounts.length) {
+      container.innerHTML = '<div style="text-align:center; padding:30px; color:var(--text-dim);">هنوز حسابی نداری</div>';
+      return;
+    }
+
+    container.innerHTML = accounts.map(acc => `
+      <div class="bank-account-card ${acc.is_default ? 'default' : ''}">
+        <div class="bank-account-header">
+          <div class="bank-account-icon">
+            ${acc.account_type === 'main' ? '🟢' : 
+              acc.account_type === 'savings' ? '🟡' :
+              acc.account_type === 'vip' ? '💎' : '🏦'}
+          </div>
+          <div class="bank-account-title">
+            <div class="bank-account-name">
+              ${acc.account_type === 'main' ? 'حساب اصلی' :
+                acc.account_type === 'savings' ? 'حساب ذخیره' :
+                acc.account_type === 'vip' ? 'حساب VIP' : 'حساب'}
+            </div>
+            <div class="bank-account-type">${acc.bank_name || 'TAT Bank'}</div>
+          </div>
+        </div>
+
+        <div class="bank-account-rows">
+          <div class="bank-account-row">
+            <span class="label">شماره کارت:</span>
+            <span class="value" onclick="copyText('${acc.card_number}')">
+              ${acc.card_number}
+            </span>
+          </div>
+          <div class="bank-account-row">
+            <span class="label">شماره حساب:</span>
+            <span class="value" onclick="copyText('${acc.account_number}')">
+              ${acc.account_number}
+            </span>
+          </div>
+          <div class="bank-account-row">
+            <span class="label">شبا:</span>
+            <span class="value" style="font-size:11px;" onclick="copyText('${acc.sheba_number}')">
+              ${acc.sheba_number}
+            </span>
+          </div>
+        </div>
+
+        <div class="bank-account-actions">
+          <button class="bank-account-btn" onclick="viewAccountDetails('${acc.id}')">
+            👁 جزئیات
+          </button>
+          <button class="bank-account-btn" onclick="copyAccountAll('${acc.id}')">
+            📋 کپی همه
+          </button>
+          ${!acc.is_default ? `
+            <button class="bank-account-btn" onclick="setDefaultAccount('${acc.id}')">
+              ⭐ پیش‌فرض
+            </button>
+          ` : ''}
+        </div>
+      </div>
+    `).join('');
+
+  } catch (error) {
+    console.error('loadBankAccounts error:', error);
+    container.innerHTML = '<div style="text-align:center; padding:30px; color:var(--danger);">خطا در بارگذاری</div>';
+  }
+}
+
+async function viewAccountDetails(accountId) {
+  try {
+    const accounts = await apiGetBankAccounts(state.user.id);
+    const acc = accounts.find(a => a.id === accountId);
+    if (!acc) return;
+
+    currentAccountForPDF = acc;
+
+    document.getElementById('accountDetailsContent').innerHTML = `
+      <div class="account-detail-row">
+        <span class="label">نوع حساب:</span>
+        <span class="value" style="direction:rtl;">
+          ${acc.account_type === 'main' ? '🟢 حساب اصلی' :
+            acc.account_type === 'savings' ? '🟡 حساب ذخیره' :
+            acc.account_type === 'vip' ? '💎 حساب VIP' : '🏦 حساب'}
+        </span>
+      </div>
+      <div class="account-detail-row">
+        <span class="label">نام صاحب:</span>
+        <span class="value" style="direction:rtl;">${acc.holder_name || '-'}</span>
+      </div>
+      <div class="account-detail-row">
+        <span class="label">بانک:</span>
+        <span class="value" style="direction:rtl;">${acc.bank_name || 'TAT Bank'}</span>
+      </div>
+      <div class="account-detail-row">
+        <span class="label">شماره کارت:</span>
+        <span class="value" onclick="copyText('${acc.card_number}')">${acc.card_number}</span>
+      </div>
+      <div class="account-detail-row">
+        <span class="label">شماره حساب:</span>
+        <span class="value" onclick="copyText('${acc.account_number}')">${acc.account_number}</span>
+      </div>
+      <div class="account-detail-row">
+        <span class="label">شبا:</span>
+        <span class="value" style="font-size:11px;" onclick="copyText('${acc.sheba_number}')">${acc.sheba_number}</span>
+      </div>
+      <div class="account-detail-row">
+        <span class="label">CVV2:</span>
+        <span class="value" onclick="copyText('${acc.cvv}')">${acc.cvv}</span>
+      </div>
+      <div class="account-detail-row">
+        <span class="label">تاریخ انقضا:</span>
+        <span class="value">${acc.card_expiry || '۱۲/۳۰'}</span>
+      </div>
+    `;
+
+    closeModal();
+    setTimeout(() => openModal('account-details'), 200);
+
+  } catch (error) {
+    console.error('viewAccountDetails error:', error);
+    showToast('خطا در بارگذاری جزئیات');
+  }
+}
+
+function copyAccountAll(accountId) {
+  apiGetBankAccounts(state.user.id).then(accounts => {
+    const acc = accounts.find(a => a.id === accountId);
+    if (!acc) return;
+
+    const text = `🏦 ${acc.bank_name || 'TAT Bank'}
+👤 صاحب: ${acc.holder_name}
+💳 شماره کارت: ${acc.card_number}
+🔢 شماره حساب: ${acc.account_number}
+🏛 شبا: ${acc.sheba_number}`;
+
+    copyText(text);
+  });
+}
+
+async function setDefaultAccount(accountId) {
+  try {
+    // اول همه رو غیرپیش‌فرض کن
+    await supabase
+      .from('bank_accounts')
+      .update({ is_default: false })
+      .eq('user_id', state.user.id);
+
+    // بعد این یکی رو پیش‌فرض کن
+    await supabase
+      .from('bank_accounts')
+      .update({ is_default: true })
+      .eq('id', accountId);
+
+    // آپدیت users
+    await supabase
+      .from('users')
+      .update({ default_account_id: accountId })
+      .eq('id', state.user.id);
+
+    showToast('حساب پیش‌فرض تغییر کرد ⭐');
+    loadBankAccounts();
+
+  } catch (error) {
+    console.error('setDefaultAccount error:', error);
+    showToast('خطا در تغییر پیش‌فرض');
+  }
+}
+
+function openNewAccountModal() {
+  closeModal();
+  setTimeout(() => {
+    document.getElementById('newAccountHolder').value = state.user.name || '';
+    openModal('new-account');
+  }, 200);
+}
+
+async function createNewAccount() {
+  const holderName = document.getElementById('newAccountHolder').value.trim();
+  const accountType = document.getElementById('newAccountType').value;
+
+  if (!holderName) {
+    showToast('نام صاحب حساب رو وارد کن ❌');
+    return;
+  }
+
+  try {
+    showToast('در حال ساخت حساب... ⏳');
+    await apiCreateBankAccount(state.user.id, holderName, accountType);
+    closeModal();
+    showToast('حساب جدید ساخته شد ✅');
+    setTimeout(() => {
+      openModal('bank-accounts');
+      loadBankAccounts();
+    }, 200);
+
+  } catch (error) {
+    console.error('createNewAccount error:', error);
+    showToast(error.message || 'خطا در ساخت حساب');
+  }
+}
+
+function downloadAccountPDF() {
+  if (!currentAccountForPDF) {
+    showToast('اول یه حساب انتخاب کن');
+    return;
+  }
+
+  const acc = currentAccountForPDF;
+  
+  // ساخت HTML برای PDF
+  const content = `
+    <!DOCTYPE html>
+    <html dir="rtl">
+    <head>
+      <meta charset="UTF-8">
+      <title>کارت TAT</title>
+      <style>
+        body { font-family: Tahoma, sans-serif; padding: 40px; background: #f0f0f0; }
+        .card {
+          width: 500px;
+          height: 300px;
+          background: linear-gradient(135deg, #00B894, #006b54);
+          border-radius: 20px;
+          color: white;
+          padding: 30px;
+          box-sizing: border-box;
+          position: relative;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+          margin: 0 auto;
+        }
+        .card-logo { font-size: 24px; font-weight: bold; }
+        .card-number { 
+          font-size: 24px; 
+          letter-spacing: 3px; 
+          margin-top: 60px; 
+          direction: ltr; 
+          text-align: center;
+        }
+        .card-bottom {
+          display: flex;
+          justify-content: space-between;
+          margin-top: 40px;
+          font-size: 14px;
+        }
+        .card-bottom > div { text-align: center; }
+        .card-label { font-size: 10px; opacity: 0.8; }
+        .card-value { font-size: 14px; font-weight: bold; margin-top: 3px; }
+        .extra-info {
+          margin: 30px auto 0;
+          max-width: 500px;
+          background: white;
+          border-radius: 15px;
+          padding: 20px;
+          box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .extra-row {
+          display: flex;
+          justify-content: space-between;
+          padding: 10px 0;
+          border-bottom: 1px solid #eee;
+        }
+        .extra-row:last-child { border-bottom: none; }
+        .extra-row span:first-child { color: #666; }
+        .extra-row span:last-child { font-weight: bold; direction: ltr; }
+      </style>
+    </head>
+    <body>
+      <div class="card">
+        <div class="card-logo">تات</div>
+        <div class="card-number">${acc.card_number}</div>
+        <div class="card-bottom">
+          <div>
+            <div class="card-label">صاحب کارت</div>
+            <div class="card-value">${acc.holder_name || '-'}</div>
+          </div>
+          <div>
+            <div class="card-label">انقضا</div>
+            <div class="card-value">${acc.card_expiry || '۱۲/۳۰'}</div>
+          </div>
+          <div>
+            <div class="card-label">CVV2</div>
+            <div class="card-value">${acc.cvv}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="extra-info">
+        <div class="extra-row">
+          <span>شماره حساب</span>
+          <span>${acc.account_number}</span>
+        </div>
+        <div class="extra-row">
+          <span>شماره شبا</span>
+          <span>${acc.sheba_number}</span>
+        </div>
+        <div class="extra-row">
+          <span>بانک</span>
+          <span>${acc.bank_name || 'TAT Bank'}</span>
+        </div>
+      </div>
+
+      <script>
+        window.onload = () => {
+          setTimeout(() => window.print(), 500);
+        };
+      <\/script>
+    </body>
+    </html>
+  `;
+
+  const w = window.open('', '_blank');
+  w.document.write(content);
+  w.document.close();
+}

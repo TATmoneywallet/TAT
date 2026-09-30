@@ -113,3 +113,29 @@ async function apiUpdateProfile(userId, name, phone, email, avatar) {
   
   return data;
 }
+
+// ═══════════════════════════════════════
+// Bank Accounts API
+// ═══════════════════════════════════════
+
+async function apiGetBankAccounts(userId) {
+  const { data, error } = await supabase
+    .from('bank_accounts')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('is_active', true)
+    .order('is_default', { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+}
+
+async function apiCreateBankAccount(userId, holderName, accountType) {
+  const { data, error } = await supabase.functions.invoke('create-bank-account', {
+    body: { userId, holderName, accountType }
+  });
+
+  if (error) throw new Error(error.message);
+  if (data.error) throw new Error(data.error);
+  return data.account;
+}
