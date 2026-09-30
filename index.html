@@ -186,17 +186,20 @@
       </div>
 
       <!-- ACTIONS -->
-      <div class="actions">
-        <button class="action-btn" onclick="openModal('send')">
-          <span class="ico">📤</span> ارسال
-        </button>
-        <button class="action-btn" onclick="openModal('receive')">
-          <span class="ico">📥</span> دریافت
-        </button>
-        <button class="action-btn" onclick="goTo('staking')">
-          <span class="ico">💰</span> سپرده
-        </button>
-      </div>
+      <div class="actions" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
+  <button class="action-btn" onclick="openModal('send')">
+    <span class="ico">📤</span> ارسال
+  </button>
+  <button class="action-btn" onclick="openModal('receive')">
+    <span class="ico">📥</span> دریافت
+  </button>
+  <button class="action-btn" onclick="goTo('staking')">
+    <span class="ico">💰</span> سپرده
+  </button>
+  <button class="action-btn" onclick="openBankAccounts()">
+    <span class="ico">🏦</span> حساب‌ها
+  </button>
+</div>
 
       <!-- PORTFOLIO QUICK -->
       <div class="section-head">
