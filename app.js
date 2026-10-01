@@ -316,7 +316,16 @@ function updateUserUI() {
   if (pa) pa.textContent = state.user.avatar || '👤';
   
   const cn = document.getElementById('cardNumber');
-  if (cn) cn.textContent = state.user.cardNumber || '۹۹۰۰ ۶۰۳۷ XXXX XXXX';
+if (cn) cn.textContent = toPersianDigits(state.user.cardNumber || '۹۹۰۰ ۶۶۰۰ XXXX XXXX');
+   // اعداد فارسی
+function toPersianDigits(str) {
+  if (!str) return '';
+  const map = {
+    '0':'۰','1':'۱','2':'۲','3':'۳','4':'۴',
+    '5':'۵','6':'۶','7':'۷','8':'۸','9':'۹'
+  };
+  return String(str).replace(/[0-9]/g, d => map[d]);
+}
   const chb = document.getElementById('cardHolderBack');
   if (chb) chb.textContent = (state.user.name || 'USER').toUpperCase();
   const cv = document.getElementById('cardCVV');
