@@ -139,3 +139,38 @@ async function apiCreateBankAccount(userId, holderName, accountType) {
   if (data.error) throw new Error(data.error);
   return data.account;
 }
+
+// ═══════════════════════════════════════
+// Second Password API
+// ═══════════════════════════════════════
+
+async function apiSetSecondPassword(userId, password) {
+  const { data, error } = await supabase.rpc('set_second_password', {
+    p_user_id: userId,
+    p_password: password
+  });
+
+  if (error) throw error;
+  return data;
+}
+
+async function apiVerifySecondPassword(userId, password) {
+  const { data, error } = await supabase.rpc('verify_second_password', {
+    p_user_id: userId,
+    p_password: password
+  });
+
+  if (error) throw error;
+  return data;
+}
+
+async function apiHasSecondPassword(userId) {
+  const { data, error } = await supabase
+    .from('user_security')
+    .select('second_password_hash')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return !!(data && data.second_password_hash);
+}
