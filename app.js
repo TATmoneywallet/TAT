@@ -621,6 +621,22 @@ async function confirmSend() {
   if (!amount || amount <= 0) { showToast('مقدار معتبر وارد کن ❌'); return; }
   if (amount > state.user.balance) { showToast('موجودی کافی نیست ❌'); return; }
   
+  // چک رمز دوم
+  const hasPass = await checkSecondPassword();
+  if (!hasPass) return;
+  
+  // ذخیره برای بعد
+  pendingTransfer = { recipient, amount, note };
+  
+  // بستن مودال ارسال + باز کردن مودال رمز دوم
+  closeModal();
+  setTimeout(() => openSecondPassModal({ recipient, amount, note }), 300);
+}
+  
+  if (!recipient) { showToast('آیدی گیرنده رو وارد کن ❌'); return; }
+  if (!amount || amount <= 0) { showToast('مقدار معتبر وارد کن ❌'); return; }
+  if (amount > state.user.balance) { showToast('موجودی کافی نیست ❌'); return; }
+  
   try {
     showToast('در حال ارسال... ⏳');
     const result = await apiTransfer(state.user.id, recipient, amount, note);
@@ -1389,4 +1405,134 @@ function downloadAccountPDF() {
   const w = window.open('', '_blank');
   w.document.write(content);
   w.document.close();
+}
+
+// ═══════════════════════════════════════
+// SECOND PASSWORD
+// ═══════════════════════════════════════
+
+let pendingTransfer = null;
+
+async function checkSecondPassword() {
+  try {
+    const hasPass = await apiHasSecondPassword(state.user.id);
+    
+    if (!hasPass) {
+      // اجبار به تعیین رمز دوم
+      openModal('set-2pass');
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error('checkSecondPassword error:', error);
+    return false;
+  }
+}
+
+async function saveSecondPassword() {
+  const pass = document.getElementById('newSecondPass').value.trim();
+  const confirm = document.getElementById('confirmSecondPass').value.trim();
+
+  if (pass.length !== 6 || !/^\d{6}$/.test(pass)) {
+    showToast('رمز دوم باید ۶ رقم باشه ❌');
+    return;
+  }
+
+  if (pass !== confirm) {
+    showToast('رمز و تأییدش یکسان نیستن ❌');
+    return;
+  }
+
+  try {
+    showToast('در حال ذخیره... ⏳');
+    await apiSetSecondPassword(state.user.id, pass);
+    closeModal();
+    showToast('رمز دوم با موفقیت ذخیره شد ✅');
+    document.getElementById('newSecondPass').value = '';
+    document.getElementById('confirmSecondPass').value = '';
+  } catch (error) {
+    console.error('saveSecondPassword error:', error);
+    showToast(error.message || 'خطا در ذخیره');
+  }
+}
+
+function openSecondPassModal(transferData) {
+  pendingTransfer = transferData;
+  
+  document.getElementById('confirmTransferAmount').textContent = 
+    toFa(transferData.amount) + ' TAT';
+  document.getElementById('enterSecondPass').value = '';
+  document.getElementById('secondPassError').textContent = '';
+  
+  openModal('enter-2pass');
+  setTimeout(() => {
+    document.getElementById('enterSecondPass').focus();
+  }, 300);
+}
+
+async function confirmTransferWithPassword() {
+  const pass = document.getElementById('enterSecondPass').value.trim();
+  const errEl = document.getElementById('secondPassError');
+
+  if (pass.length !== 6) {
+    errEl.textContent = 'رمز دوم باید ۶ رقم باشه';
+    return;
+  }
+
+  errEl.textContent = '';
+
+  try {
+    // تأیید رمز دوم
+    const result = await apiVerifySecondPassword(state.user.id, pass);
+
+    if (!result.success) {
+      errEl.textContent = result.error || 'رمز اشتباه است';
+      if (result.locked_until) {
+        showToast('حساب موقتاً قفل شد 🔒');
+      }
+      return;
+    }
+
+    // رمز درست — ادامه انتقال
+    closeModal();
+    await executePendingTransfer();
+
+  } catch (error) {
+    console.error('confirmTransferWithPassword error:', error);
+    errEl.textContent = 'خطا در تأیید رمز';
+  }
+}
+
+async function executePendingTransfer() {
+  if (!pendingTransfer) return;
+
+  try {
+    showToast('در حال انتقال... ⏳');
+    
+    const result = await apiTransfer(
+      state.user.id,
+      pendingTransfer.recipient,
+      pendingTransfer.amount,
+      pendingTransfer.note
+    );
+    
+    state.user.balance = result.newBalance;
+    saveSession(state.user);
+    updateUserUI();
+    
+    showToast('انتقال انجام شد ✅');
+    
+    // پاک کردن فرم
+    document.getElementById('sendRecipient').value = '';
+    document.getElementById('sendAmount').value = '';
+    document.getElementById('sendNote').value = '';
+    
+    pendingTransfer = null;
+    
+    await loadUserData();
+    
+  } catch (error) {
+    console.error('executePendingTransfer error:', error);
+    showToast(error.message || 'خطا در انتقال');
+  }
 }
